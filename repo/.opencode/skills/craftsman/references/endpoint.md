@@ -25,9 +25,12 @@ body field for field:
 ```java
 package com.example.starter.catalog.presentation.dto.request;
 
+import jakarta.validation.constraints.Digits;
 import java.math.BigDecimal;
 
-public record AddProductRequestDto(String name, BigDecimal price) {
+public record AddProductRequestDto(
+    String name,
+    @Digits(integer = 10, fraction = 2, message = "The price exceeds what can be stored") BigDecimal price) {
 }
 ```
 
@@ -35,7 +38,8 @@ A nested JSON object or array element is a second request DTO of its own, in the
 package:
 
 ```java
-public record PlaceOrderRequestDto(List<PlaceOrderLineRequestDto> lines) {
+public record PlaceOrderRequestDto(
+    List<@NotNull(message = "An order line is required") @Valid PlaceOrderLineRequestDto> lines) {
 }
 
 public record PlaceOrderLineRequestDto(UUID productId, int quantity) {
@@ -49,7 +53,10 @@ public record PlaceOrderLineRequestDto(UUID productId, int quantity) {
   only the transport can check. Every constraint then carries a message naming the field,
   never listing the values it may take; the controller parameter takes `@Valid`, and a
   nested DTO or collection field takes `@Valid` too, or its constraints are silently
-  skipped. Add a handler for `MethodArgumentNotValidException` the first time you do.
+  skipped. `GlobalExceptionHandler` already turns `MethodArgumentNotValidException` into an
+  enveloped 400. The starter uses it twice: the price column's precision
+  (`@Digits(integer = 10, fraction = 2)`, so an oversized price is a 400, not a database
+  error at commit), and a `null` order line.
 - Path variables are **not** DTO fields. They arrive as `@PathVariable` and are passed
   to the mapper separately.
 
@@ -115,7 +122,7 @@ public class ProductController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public ApiResponse<AddProductResponseDto> add(@RequestBody final AddProductRequestDto request) {
+  public ApiResponse<AddProductResponseDto> add(@Valid @RequestBody final AddProductRequestDto request) {
     final var result = addProduct.execute(AddProductMapper.toCommand(request));
     return ApiResponse.ok(AddProductMapper.toResponse(result));
   }
@@ -127,7 +134,7 @@ Class-level: `@RestController`, `@RequestMapping("/api/{plural-resource}")`,
 endpoint, named after the action.
 
 Per method: the HTTP verb mapping, `@ResponseStatus` when the status is not 200
-(`CREATED` on a creation), `@RequestBody` on the input.
+(`CREATED` on a creation), `@Valid @RequestBody` on the input.
 
 **One line per object.** The body reads as the steps of the endpoint: a `final` local
 for the command, one for the result, then the `ApiResponse` factory around the mapped
@@ -198,13 +205,13 @@ public class GlobalExceptionHandler {
 | Exception | Status |
 |---|---|
 | **`DomainException`** and every subclass — domain and application refusals | **400**, enveloped |
+| **`MethodArgumentNotValidException`** — a request DTO constraint failed | **400**, enveloped, first constraint message |
 | anything else | Spring's default |
 
 Because every refusal of the domain and application layers extends `DomainException`
 (`use-case-and-ports.md`), **a new refusal needs no handler**. It inherits 400
 automatically. Add a handler only when a specific exception genuinely deserves a
-different status — a not-found base mapped to 404, `MethodArgumentNotValidException`
-once request validation exists — and then add it in `GlobalExceptionHandler`, enveloped
+different status — a not-found base mapped to 404, for instance — and then add it in `GlobalExceptionHandler`, enveloped
 through an `ApiResponse` factory, never as a `try/catch` or an `@ExceptionHandler` in
 the controller.
 

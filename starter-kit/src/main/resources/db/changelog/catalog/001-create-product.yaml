@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: catalog-001-create-product
+      author: starter
+      changes:
+        - createTable:
+            tableName: product
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: price
+                  type: decimal(12, 2)
+                  constraints:
+                    nullable: false

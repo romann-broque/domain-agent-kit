@@ -4,10 +4,10 @@ Feature: Place an order
   I want to order products from the catalog
   So that they are reserved for me in the quantities I asked for
 
-  Background:
-    Given the catalog knows the products "Desk lamp" and "Notebook"
-
   Rule: Every ordered product must be known by the catalog
+
+    Background:
+      Given the catalog knows the products "Desk lamp" and "Notebook"
 
     Scenario: ✅ Order with known products
       When the user orders
@@ -29,6 +29,9 @@ Feature: Place an order
 
   Rule: An order holds at least one line, each with a quantity between 1 and 999
 
+    Background:
+      Given the catalog knows the products "Desk lamp" and "Notebook"
+
     Scenario: ❌ No lines
       When the user orders nothing
       Then the order is refused and nothing is kept
@@ -40,6 +43,9 @@ Feature: Place an order
       Then the order is refused and nothing is kept
 
   Rule: Lines for the same product are merged
+
+    Background:
+      Given the catalog knows the products "Desk lamp" and "Notebook"
 
     Scenario: ✅ Two lines for the same product
       When the user orders

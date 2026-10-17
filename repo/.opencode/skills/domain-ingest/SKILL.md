@@ -93,7 +93,7 @@ Where production code and behaviour tests exist, **the code wins**. A divergence
 between incoming knowledge and running code is a finding, not a correction to apply
 silently. One exception, and on a fresh repository it is most of the code: the `catalog` and
 `ordering` contexts are starter-kit examples whose semantics carry no business
-meaning — `.specify/memory/constitution.md` § *I*, *Starter-kit examples*. Their
+meaning — `.specify/memory/constitution.md` § *I. Domain-Driven Layered Architecture* (starter-kit examples). Their
 types are not evidence about the project's domain, and a term matching one of them
 is a coincidence, not a collision.
 

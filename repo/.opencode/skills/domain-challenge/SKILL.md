@@ -19,7 +19,7 @@ page and a verdict.
 A new project starts without a living documentation. There is no body of behaviour
 tests describing the business, and the `catalog` and `ordering` contexts in
 `src/main/java` are starter-kit scaffolding with no business meaning
-(`.specify/memory/constitution.md` § *I*, *Starter-kit examples*). An agent asked to reason about a domain it
+(`.specify/memory/constitution.md` § *I. Domain-Driven Layered Architecture* (starter-kit examples)). An agent asked to reason about a domain it
 cannot read will produce a confident, coherent and wrong answer — and that answer
 will then be laundered into a spec, into tasks, and into code.
 

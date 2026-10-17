@@ -1,0 +1,23 @@
+{
+  "skill_name": "skill-creator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We just spent the last hour working through a code review workflow together — you searched for changed files, checked architecture boundaries, flagged issues, and produced a structured report. I'd like to turn that into a reusable skill. Can you help me capture it?",
+      "expected_output": "Agent extracts the workflow from conversation history, identifies the key steps and intent, asks targeted clarifying questions to fill gaps (trigger contexts, output format, edge cases), and produces a draft SKILL.md that reflects the actual workflow — not a generic template. The two foundational questions (what problem, how will we know it's solved) should be answered before any draft is written.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I want to create a skill that helps me write conventional commit messages. Given a description of what I changed, it should output a properly formatted commit message following the conventionalcommits.org spec. What do I need to think about?",
+      "expected_output": "Agent anchors on the problem (what makes a bad commit message today, how will we know the skill improves it), asks targeted questions about edge cases (multi-scope commits, breaking changes, body vs footer), proposes realistic test cases, and writes a focused SKILL.md. The body of the skill should express reasoning, not just rules — the agent should explain why conventional commits matter and what the skill is optimizing for.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I have a skill called `acme-pr-reviewer` that does code reviews for our Java/Spring + Angular project. It works okay but it tends to flag too many false positives — things that CI already catches — and it misses some real architecture issues. I want to improve it.",
+      "expected_output": "Agent identifies this as an improvement scenario (not creation from scratch), asks to read the existing skill before proposing changes, diagnoses whether the false-positive problem is a skill instruction issue or an assertion issue, and distinguishes conformance failures (skill follows its rules but flags the wrong things) from impact failures (skill misses actual problems). The agent should propose targeted changes, not a full rewrite, and offer to run evals to validate the improvement.",
+      "files": []
+    }
+  ]
+}

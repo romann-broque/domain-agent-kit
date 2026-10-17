@@ -1,7 +1,13 @@
 # repo/
 
 The per-project workflow: spec-driven, test-first, domain-aware. Copy the content of this
-folder to the root of a project (for instance on top of a copy of `../starter-kit/`).
+folder to the root of a project (for instance on top of a copy of `../starter-kit/`),
+leaving out this README and appending the ignore rules instead of copying them:
+
+```bash
+rsync -a --exclude README.md --exclude .gitignore.snippet repo/ <project>/
+cat repo/.gitignore.snippet >> <project>/.gitignore
+```
 
 ```
 repo/

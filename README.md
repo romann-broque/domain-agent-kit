@@ -20,11 +20,19 @@ agentic-setup/
    `~/.config/opencode/`. See [global/README.md](global/README.md).
 2. **Personal layer (optional)** — pick what you like from `personal/` and merge it into your
    global `AGENTS.md` and `~/.config/opencode/plugins/`. See [personal/README.md](personal/README.md).
-3. **An existing project** — copy the content of `repo/` to the project root and adapt the
-   constitution and `AGENTS.md`. See [repo/README.md](repo/README.md).
-4. **A new project** — copy `starter-kit/` to a new folder, check that `./gradlew build` is
-   green, then copy `repo/` on top of it and start with the `domain-challenge` skill.
-   See [starter-kit/README.md](starter-kit/README.md).
+3. **An existing project** — copy `repo/` to the project root, without its own README and
+   with its ignore rules appended, then adapt the constitution and `AGENTS.md`:
+
+   ```bash
+   rsync -a --exclude README.md --exclude .gitignore.snippet repo/ <project>/
+   cat repo/.gitignore.snippet >> <project>/.gitignore
+   ```
+
+   See [repo/README.md](repo/README.md).
+4. **A new project** — copy `starter-kit/` to a new folder (`rsync -a --exclude build
+   --exclude .gradle starter-kit/ <project>/`), check that `./gradlew build` is green, then
+   copy `repo/` on top of it with the two commands of step 3 and start with the
+   `domain-challenge` skill. See [starter-kit/README.md](starter-kit/README.md).
 
 The workflow order and what each step produces are in [repo/docs/WORKFLOW.md](repo/docs/WORKFLOW.md).
 

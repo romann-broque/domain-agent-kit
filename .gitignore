@@ -1,0 +1,6 @@
+docs/superpowers/
+.superpowers/
+.DS_Store
+starter-kit/build/
+starter-kit/.gradle/
+!AGENTS.md

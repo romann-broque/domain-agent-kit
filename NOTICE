@@ -1,0 +1,20 @@
+agentic-setup
+Copyright (c) 2026 Romann Broque — MIT License (see LICENSE)
+
+This repository includes or derives from the following third-party work.
+
+1. spec-kit — https://github.com/github/spec-kit
+   Copyright (c) GitHub, Inc. — MIT License
+   Derived files:
+   - repo/.opencode/commands/speckit.*.md
+   - repo/.specify/templates/*-template.md (except domain-context and domain-open-point)
+   - repo/.specify/scripts/bash/{common,create-new-feature,check-prerequisites,setup-plan,setup-tasks,resolve-template}.sh
+   - repo/.specify/workflows/
+   Customisations are delimited by <!-- TRACE:BEGIN/END --> and <!-- TDD:BEGIN/END --> markers.
+
+2. skill-creator — Anthropic skill-creator, adapted for OpenCode
+   Apache License 2.0 — full text in global/skills/skill-creator/LICENSE.txt
+   Derived files: global/skills/skill-creator/**
+
+3. java-fixture-generator — https://github.com/romann-broque/java-fixture-generator
+   Apache License 2.0 — used by starter-kit/ as a Maven Central dependency, not vendored.

@@ -5,6 +5,7 @@ import com.example.starter.catalog.presentation.dto.request.AddProductRequestDto
 import com.example.starter.catalog.presentation.dto.response.AddProductResponseDto;
 import com.example.starter.catalog.presentation.mapper.AddProductMapper;
 import com.example.starter.core.presentation.dtos.responses.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +23,7 @@ public class ProductController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public ApiResponse<AddProductResponseDto> add(@RequestBody final AddProductRequestDto request) {
+  public ApiResponse<AddProductResponseDto> add(@Valid @RequestBody final AddProductRequestDto request) {
     final var result = addProduct.execute(AddProductMapper.toCommand(request));
     return ApiResponse.ok(AddProductMapper.toResponse(result));
   }

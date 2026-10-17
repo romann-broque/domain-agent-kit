@@ -44,4 +44,22 @@ class StarterApplicationSmokeTest {
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.error").exists());
   }
+
+  @Test
+  void aPriceBeyondWhatCanBeStoredIsRefusedWithABadRequest() throws Exception {
+    mockMvc.perform(post("/api/products")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"name\":\"Big lamp\",\"price\":99999999999999}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").exists());
+  }
+
+  @Test
+  void aMissingOrderLineIsRefusedWithABadRequest() throws Exception {
+    mockMvc.perform(post("/api/orders")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"lines\":[null]}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").exists());
+  }
 }

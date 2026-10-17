@@ -21,6 +21,7 @@ class BoundedContextIsolationRulesTest {
       .context("catalog", BASE + ".catalog").and()
       .context("ordering", BASE + ".ordering")
       .mayCross("infrastructure.acl", "catalog", "application")
+      .mayCross("infrastructure.acl", "catalog", "domain")
       .and()
       .build();
 

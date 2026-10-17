@@ -132,7 +132,7 @@ echo "## Checked tasks that name a file"
 MISSING=0
 CHECKED=0
 while IFS= read -r line; do
-  for path in $(echo "$line" | grep -oE '(src|docs|modules)/[A-Za-z0-9_./{}\[\]-]+\.[a-z]+'); do
+  for path in $(echo "$line" | grep -oE '(src|docs|modules)/[][A-Za-z0-9_./{}-]+\.[a-z]+'); do
     case "$path" in *'['*|*'{'*) continue ;; esac
     CHECKED=$((CHECKED + 1))
     if [ ! -e "$path" ]; then

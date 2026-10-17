@@ -16,8 +16,8 @@ agentic-setup/
 
 ## How to use
 
-1. **Global config** — copy `global/AGENTS.md`, `global/agents/` and `global/skills/` into
-   `~/.config/opencode/`. See [global/README.md](global/README.md).
+1. **Global config** — install the [Superpowers](https://github.com/obra/superpowers) plugin, then copy
+   `global/AGENTS.md` and `global/skills/` into `~/.config/opencode/`. See [global/README.md](global/README.md).
 2. **Personal layer (optional)** — pick what you like from `personal/` and merge it into your
    global `AGENTS.md` and `~/.config/opencode/plugins/`. See [personal/README.md](personal/README.md).
 3. **An existing project** — copy `repo/` to the project root, without its own README and

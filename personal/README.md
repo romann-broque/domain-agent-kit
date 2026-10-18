@@ -5,7 +5,7 @@ Most of it is macOS-specific.
 
 | Path | How to install | What it does |
 |---|---|---|
-| `AGENTS.personal.md` | Append to `~/.config/opencode/AGENTS.md` | Personal space (`~/opencode-space/`, notes between sessions), `rtk` output-filtering rules, macOS notifications at the end of each response and on every `question` |
+| `AGENTS.personal.md` | Append to `~/.config/opencode/AGENTS.md` | `rtk` output-filtering rules, macOS notifications at the end of each response and on every `question` |
 | `plugins/notify.ts` | Copy to `~/.config/opencode/plugins/` | Notifies when OpenCode stops for a reason the agent cannot report itself (permission prompt, error, interruption) |
 
 Requirements: macOS (`osascript`) for notifications; `rtk` installed if you keep the RTK section.

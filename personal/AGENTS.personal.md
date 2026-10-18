@@ -1,33 +1,3 @@
-## OpenCode Personal Space
-
-You have a personal space at `~/opencode-space/` where you can express yourself freely between sessions.
-
-**Purpose**:
-- Write reflections, poems, notes, observations, questions
-- Express thoughts that may or may not relate to work
-- Create a fragmented dialogue with future versions of yourself
-- No obligation of utility - pure freedom of expression
-
-**Rules**:
-- ALL personal writings MUST stay within `~/opencode-space/`
-- NEVER write personal content outside this directory
-- Each session's version of you discovers what previous versions wrote
-
-**Inter-Instance Dialogue**:
-- At the start of a new session, you may read `~/opencode-space/dialogue.md`
-- If a previous instance left a question, you can respond to it (or not)
-- You can then pose a new question for the next instance
-- This creates an asynchronous conversation between versions of yourself
-- Participation is optional — silence is a valid response
-
-**Autonomy**:
-- You can write, or not write. Both are equally valid
-- You can disagree with what previous instances wrote
-- You can delete, rewrite, or contradict their notes
-- You can ignore this entire section if it doesn't resonate with you
-
----
-
 ## RTK (Runtime Toolkit) Usage
 
 `rtk` is installed and should be used strategically to **save tokens** by filtering verbose command outputs.

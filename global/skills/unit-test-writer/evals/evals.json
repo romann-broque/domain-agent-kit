@@ -1,0 +1,87 @@
+{
+  "skill_name": "unit-test-writer",
+  "evals": [
+    {
+      "id": 0,
+      "name": "java-ddd-with-testing-md",
+      "prompt": "Write unit tests for the `AddAssetUseCase` class. The project is at /tmp/eval-java-project. The class is at src/main/java/com/example/inventory/application/usecase/AddAssetUseCase.java",
+      "expected_output": "Skill loads TESTING.md first, shows preview with test names + locations before writing, applies builder/in-memory/NativeGenerators conventions from TESTING.md",
+      "files": [],
+      "assertions": [
+        {
+          "id": "loads-testing-md",
+          "text": "Skill explicitly reads TESTING.md before writing any test",
+          "type": "conformance"
+        },
+        {
+          "id": "uses-in-memory-adapters",
+          "text": "Generated tests use in-memory adapters instead of mocks",
+          "type": "impact"
+        },
+        {
+          "id": "uses-native-generators",
+          "text": "Generated tests use NativeGenerators for UUID generation",
+          "type": "impact"
+        },
+        {
+          "id": "correct-test-file-location",
+          "text": "Test file is placed in src/test/java matching the source package structure",
+          "type": "impact"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "typescript-no-conventions",
+      "prompt": "Add unit tests for a React hook called `useUserProfile` in a TypeScript project. The project is at /tmp/eval-ts-project and has no TESTING.md or rules/ folder. The hook fetches user data from an API and manages loading/error states.",
+      "expected_output": "Skill detects no convention files, proposes to create TESTING.md and/or rules/, infers conventions from existing tests if any, shows preview before writing",
+      "files": [],
+      "assertions": [
+        {
+          "id": "detects-missing-conventions",
+          "text": "Skill detects that no TESTING.md or rules/ folder exists and explicitly notifies the user",
+          "type": "conformance"
+        },
+        {
+          "id": "offers-to-create-convention-files",
+          "text": "Skill offers to create TESTING.md and/or rules/ independently",
+          "type": "conformance"
+        },
+        {
+          "id": "detects-correct-language",
+          "text": "Skill correctly identifies TypeScript/React as the target language and framework",
+          "type": "impact"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "python-rules-folder-only",
+      "prompt": "Test the `calculate_discount` function in a Python project. The project is at /tmp/eval-python-project which has a rules/ folder at the root with a testing-conventions.md file inside, but no TESTING.md. The function applies percentage discounts with minimum order validation.",
+      "expected_output": "Skill loads rules/testing-conventions.md, applies those conventions, shows preview, generates pytest-style tests respecting the rules",
+      "files": [],
+      "assertions": [
+        {
+          "id": "loads-rules-folder",
+          "text": "Skill scans and loads all .md files from the rules/ folder",
+          "type": "conformance"
+        },
+        {
+          "id": "no-testing-md-created-if-not-asked",
+          "text": "Skill does not create a TESTING.md since rules/ already exists",
+          "type": "conformance"
+        },
+        {
+          "id": "applies-rules-conventions",
+          "text": "Generated tests follow the conventions specified in rules/testing-conventions.md",
+          "type": "impact"
+        },
+        {
+          "id": "covers-edge-cases",
+          "text": "Generated tests cover nominal path, invalid input, and boundary values",
+          "type": "impact"
+        }
+      ]
+    }
+  ]
+}

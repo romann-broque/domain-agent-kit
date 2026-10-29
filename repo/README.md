@@ -5,7 +5,7 @@ folder to the root of a project (for instance on top of a copy of `../starter-ki
 leaving out this README and appending the ignore rules instead of copying them:
 
 ```bash
-rsync -a --exclude README.md --exclude .gitignore.snippet repo/ <project>/
+rsync -a --exclude /README.md --exclude /.gitignore.snippet repo/ <project>/
 cat repo/.gitignore.snippet >> <project>/.gitignore
 ```
 

@@ -34,6 +34,13 @@ fi
 
 BASE_REF="${BASE_REF:-origin/main}"
 
+# Where production and test code live. The defaults match any module depth and
+# any JVM language; a project laid out otherwise sets both variables.
+MAIN_RE="${SPECIFY_MAIN_RE:-(^|/)src/main/}"
+TEST_RE="${SPECIFY_TEST_RE:-(^|/)src/test/}"
+# Paths that are never code: a range touching only these has nothing to order.
+NOT_CODE_RE='(^|/)(specs|docs)/|^\.(specify|opencode|github)/|\.md$|(^|/)\.gitignore$'
+
 DRIFT=0
 UNCHECKABLE=0
 
@@ -91,10 +98,18 @@ else
   TEST_FIRST=1
   SEEN_TEST=0
   SEEN_MAIN=0
-  for sha in $(git rev-list --reverse "$RANGE"); do
-    files=$(git show --name-only --pretty=format: "$sha")
-    has_test=$(echo "$files" | grep -cE '^src/test/')
-    has_main=$(echo "$files" | grep -cE '^src/main/java/')
+  SEEN_OTHER=0
+  for sha in $(git rev-list --reverse --first-parent --no-merges "$RANGE"); do
+    # One "STATUS<TAB>PATH" line per file; a rename keeps its new path. A
+    # deleted test proves nothing was written first, so it does not count.
+    changes=$(git -c core.quotePath=false show --name-status --pretty=format: "$sha" \
+      | awk -F'\t' 'NF >= 2 { print substr($1, 1, 1) "\t" $NF }')
+    has_test=$(echo "$changes" | awk -F'\t' -v re="$TEST_RE" '$1 != "D" && $2 ~ re' | grep -c .)
+    has_main=$(echo "$changes" | awk -F'\t' -v re="$MAIN_RE" '$2 ~ re' | grep -c .)
+    has_other=$(echo "$changes" \
+      | awk -F'\t' -v m="$MAIN_RE" -v t="$TEST_RE" -v n="$NOT_CODE_RE" '$2 !~ m && $2 !~ t && $2 !~ n' \
+      | grep -c .)
+    [ "$has_other" -gt 0 ] && SEEN_OTHER=1
     if [ "$has_test" -gt 0 ] && [ "$has_main" -gt 0 ]; then
       MIXED=1
       echo "  UNVERIFIABLE  $(git log -1 --format='%h %s' "$sha")"
@@ -110,8 +125,12 @@ else
       SEEN_TEST=1
     fi
   done
-  if [ "$SEEN_TEST" -eq 0 ] && [ "$SEEN_MAIN" -eq 0 ] && [ "$MIXED" -eq 0 ]; then
-    echo "  INFO          no Java source touched in $RANGE"
+  if [ "$SEEN_TEST" -eq 0 ] && [ "$SEEN_MAIN" -eq 0 ] && [ "$MIXED" -eq 0 ] && [ "$SEEN_OTHER" -eq 1 ]; then
+    echo "  CANNOT CHECK  $RANGE changes code, but none of it under $MAIN_RE or $TEST_RE."
+    echo "                Set SPECIFY_MAIN_RE and SPECIFY_TEST_RE to this project's layout."
+    UNCHECKABLE=1
+  elif [ "$SEEN_TEST" -eq 0 ] && [ "$SEEN_MAIN" -eq 0 ] && [ "$MIXED" -eq 0 ]; then
+    echo "  INFO          no source touched in $RANGE"
   elif [ "$MIXED" -eq 1 ]; then
     echo "  VERDICT       order not verifiable for at least one commit."
     echo "                Reported as unverifiable, never as compliant."

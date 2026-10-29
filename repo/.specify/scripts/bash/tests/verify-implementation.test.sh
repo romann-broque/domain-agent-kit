@@ -11,7 +11,7 @@ SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/verify-implementation.s
 FAILURES=0
 PASSES=0
 
-new_repo() {
+empty_repo() {
   REPO="$(mktemp -d)"
   git -C "$REPO" init -q -b main
   git -C "$REPO" config user.email test@example.com
@@ -22,6 +22,10 @@ new_repo() {
   write_file README.md "base"
   commit_all "chore: start"
   git -C "$REPO" branch -q -f base
+}
+
+new_repo() {
+  empty_repo
   write_file src/test/java/app/ThingTest.java "class ThingTest {}"
   commit_all "test: thing"
   write_file src/main/java/app/Thing.java "class Thing {}"
@@ -39,19 +43,22 @@ commit_all() {
 }
 
 write_tasks() {
-  write_file specs/001-thing/tasks.md "# Tasks\n\n- [x] T001 [US1] Write src/test/java/app/ThingTest.java\n- [x] T002 [GATE] Run the tests and paste the failure\n\n\`\`\`text\nBUILD FAILED\n\`\`\`\n\n- [x] T003 [US1] Implement $1"
+  local test_path="${2:-src/test/java/app/ThingTest.java}"
+  write_file specs/001-thing/tasks.md "# Tasks\n\n- [x] T001 [US1] Write $test_path\n- [x] T002 [GATE] Run the tests and paste the failure\n\n\`\`\`text\nBUILD FAILED\n\`\`\`\n\n- [x] T003 [US1] Implement $1"
 }
 
+# expect_exit NAME EXPECTED_CODE [PATTERN] — PATTERN, when given, must appear in
+# the output, so a case cannot pass on the right exit code for the wrong reason.
 expect_exit() {
-  local name="$1" expected="$2" output code
+  local name="$1" expected="$2" pattern="${3:-}" output code
   output="$(cd "$REPO" && BASE_REF=base .specify/scripts/bash/verify-implementation.sh specs/001-thing 2>&1)"
   code=$?
-  if [ "$code" -eq "$expected" ]; then
+  if [ "$code" -eq "$expected" ] && { [ -z "$pattern" ] || echo "$output" | grep -qE -- "$pattern"; }; then
     PASSES=$((PASSES + 1))
     echo "  PASS  $name"
   else
     FAILURES=$((FAILURES + 1))
-    echo "  FAIL  $name — expected exit $expected, got $code"
+    echo "  FAIL  $name — expected exit $expected${pattern:+ and /$pattern/}, got $code"
     echo "$output" | sed 's/^/        | /'
   fi
   rm -rf "$REPO"
@@ -66,6 +73,43 @@ expect_exit "checked tasks naming existing files pass" 0
 new_repo
 write_tasks "src/main/java/app/Ghost.java"
 expect_exit "a checked task naming a missing file is drift" 1
+
+empty_repo
+write_file src/main/kotlin/app/Thing.kt "class Thing"
+commit_all "feat: thing"
+write_tasks "src/main/kotlin/app/Thing.kt"
+expect_exit "Kotlin production code with no preceding test is drift" 1 "production code committed with no preceding test commit"
+
+empty_repo
+write_file src/test/kotlin/app/ThingTest.kt "class ThingTest"
+commit_all "test: thing"
+write_file src/main/kotlin/app/Thing.kt "class Thing"
+commit_all "feat: thing"
+write_tasks "src/main/kotlin/app/Thing.kt" "src/test/kotlin/app/ThingTest.kt"
+expect_exit "Kotlin production code preceded by a test passes" 0
+
+empty_repo
+write_file modules/catalog/src/main/java/app/Thing.java "class Thing {}"
+commit_all "feat: thing"
+write_tasks "modules/catalog/src/main/java/app/Thing.java"
+expect_exit "multi-module production code with no preceding test is drift" 1 "production code committed with no preceding test commit"
+
+empty_repo
+write_file src/test/java/app/OldTest.java "class OldTest {}"
+commit_all "test: old"
+git -C "$REPO" branch -q -f base
+git -C "$REPO" rm -q src/test/java/app/OldTest.java
+commit_all "test: drop an obsolete test"
+write_file src/main/java/app/Thing.java "class Thing {}"
+commit_all "feat: thing"
+write_tasks "src/main/java/app/Thing.java"
+expect_exit "a commit that only deletes a test does not license production code" 1 "production code committed with no preceding test commit"
+
+empty_repo
+write_file lib/thing.py "x = 1"
+commit_all "feat: thing"
+write_tasks "docs/none.md"
+expect_exit "a range touching code under no recognised layout cannot be checked" 2 "CANNOT CHECK"
 
 echo
 echo "$PASSES passed, $FAILURES failed"

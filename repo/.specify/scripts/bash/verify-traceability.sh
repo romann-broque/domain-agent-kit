@@ -69,7 +69,7 @@ if [ -z "$FRS" ]; then
   UNCHECKABLE=1
 else
   for fr in $FRS; do
-    hits=$(grep -c "$fr" "$TASKS")
+    hits=$(grep -cE "^- \[[ xX]\] T[0-9]+ .*$fr([^0-9]|$)" "$TASKS")
     if [ "$hits" -eq 0 ]; then
       echo "  DRIFT         $fr -> no task references it"
       DRIFT=1
@@ -133,9 +133,23 @@ if [ ! -d "$BEHAVIORS_DIR" ]; then
   echo "  CANNOT CHECK  $BEHAVIORS_DIR does not exist."
   UNCHECKABLE=1
 else
-  FEATURES=$(grep -oE "$BEHAVIORS_DIR/[A-Za-z0-9_/.-]+\.feature" "$TASKS" 2>/dev/null | sort -u | while read -r f; do [ -f "$f" ] && echo "$f"; done)
-  if [ -z "$FEATURES" ]; then
-    echo "  INFO          no feature file named in tasks.md exists — scenario coverage not checked"
+  # Feature files are discovered on disk; one belongs to this spec when tasks.md names
+  # it, by path or by file name. Several specs share the directory, so a file that
+  # tasks.md does not name cannot be attributed.
+  ON_DISK=$(find "$BEHAVIORS_DIR" -type f -name '*.feature' | sort)
+  FEATURES=$(echo "$ON_DISK" | while IFS= read -r f; do
+    [ -n "$f" ] && grep -qF "$(basename "$f")" "$TASKS" && echo "$f"
+  done)
+  if [ -z "$FEATURES" ] && [ -z "$USER_STORIES" ]; then
+    echo "  INFO          the spec declares no user story — scenario coverage not checked"
+  elif [ -z "$FEATURES" ]; then
+    if [ -z "$ON_DISK" ]; then
+      echo "  CANNOT CHECK  $BEHAVIORS_DIR holds no .feature file."
+    else
+      echo "  CANNOT CHECK  no .feature file under $BEHAVIORS_DIR is named in tasks.md,"
+      echo "                so none can be attributed to this spec. Name it in the task that writes it."
+    fi
+    UNCHECKABLE=1
   else
     for f in $FEATURES; do
       if ! head -5 "$f" | grep -q '^# Covers:'; then
@@ -213,7 +227,7 @@ else
           NR <= 5 && /^# Covers:/ { header = $0; next }
           /^[[:space:]]*# Covers:/ { pending = $0; next }
           /^[[:space:]]*Rule:/ { rule = (pending != "" ? pending : header); pending = ""; next }
-          /^[[:space:]]*Scenario:/ { if (covers(rule != "" ? rule : header)) c++ }
+          /^[[:space:]]*Scenario( Outline| Template)?:/ { if (covers(rule != "" ? rule : header)) c++ }
           END { print c+0 }' "$f")))
       done
       if [ "$declared" -eq 0 ]; then

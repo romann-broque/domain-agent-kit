@@ -95,6 +95,24 @@ new_repo; mark_base
 write_file "$FEATURE" "Feature: Do a thing\n  Scenario: ✅ Works"; write_file "$MAIN" "class Thing {}"; commit_all "feat(ctx): do it all at once"
 expect_exit "a scenario and production code in one commit is drift" 1
 
+new_repo; mark_base
+write_file "src/test/resources/behaviors/ctx/ajouter_un_produit_é.feature" "Feature: Ajouter\n  Scenario: ✅ Marche"; write_file "$MAIN" "class Thing {}"; commit_all "feat(ctx): do it all at once"
+expect_exit "a non-ASCII feature file name and production code in one commit is drift" 1
+
+new_repo; mark_base
+write_file "$FEATURE" "Feature: Do a thing\n  Scenario: ✅ Works"; write_file "src/main/kotlin/com/x/Thing.kt" "class Thing"; commit_all "feat(ctx): do it all at once"
+expect_exit "a scenario and Kotlin production code in one commit is drift" 1
+
+new_repo; mark_base
+write_file "modules/ctx/$FEATURE" "Feature: Do a thing\n  Scenario: ✅ Works"; write_file "modules/ctx/$MAIN" "class Thing {}"; commit_all "feat(ctx): do it all at once"
+expect_exit "a scenario and multi-module production code in one commit is drift" 1
+
+new_repo; write_file "$SPEC" "- **FR-001**: the thing is kept"; write_file "$MAIN" "class Thing {}"; write_file "$TEST" "class ThingTest {}"; commit_all "feat(ctx): start"; mark_base
+write_file "$SPEC" "- **FR-001**: the thing is dropped"; commit_all "docs(spec): amend FR-001 after review"
+git -C "$REPO" rm -q "$TEST"; commit_all "test(ctx): drop the old test"
+write_file "$MAIN" "class Thing { int x; }"; commit_all "fix(ctx): drop the thing"
+expect_exit "a test deletion does not discharge an amended requirement" 1
+
 new_repo; write_file "$FEATURE" "Feature: Do a thing\n  Scenario Outline: ✅ Works\n    Given the user has <n> things\n    Examples:\n      | n |\n      | 1 |"; commit_all "test(ctx): pin"; mark_base
 write_file "$FEATURE" "Feature: Do a thing\n  Scenario Outline: ✅ Works\n    Given the user has <n> things\n    Examples:\n      | n |\n      | 0 |"; write_file "$MAIN" "class Thing {}"; commit_all "feat(ctx): accept zero"
 expect_exit "an examples table row and production code in one commit is drift" 1

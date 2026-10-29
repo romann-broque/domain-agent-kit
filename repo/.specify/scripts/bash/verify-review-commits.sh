@@ -28,6 +28,9 @@ CONVENTIONAL='^((feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|te
 SPEC_OWNED='(\.feature$|^specs/[^/]+/spec\.md$|^specs/[^/]+/data-model\.md$|^specs/[^/]+/contracts/)'
 SCENARIO_LINE='^[+-][[:space:]]*(Feature|Background|Rule|Scenario Outline|Scenario Template|Scenarios|Scenario|Examples|Example|Given|When|Then|And|But)([[:space:]:]|$)|^[+-].*(FR-[0-9]{3}|\*\*(Given|When|Then)\*\*)'
 GHERKIN_TABLE_ROW='^[+-][[:space:]]*\|'
+# Where production and test code live — same defaults as verify-implementation.sh.
+MAIN_RE="${SPECIFY_MAIN_RE:-(^|/)src/main/}"
+TEST_RE="${SPECIFY_TEST_RE:-(^|/)src/test/}"
 
 DRIFT=0
 UNCHECKABLE=0
@@ -48,7 +51,19 @@ RANGE="$BASE_REF..$HEAD_REF"
 COMMITS="$(git rev-list --reverse --first-parent --no-merges "$RANGE")"
 
 label() { git log -1 --format='%h %s' "$1"; }
-files_of() { git show --name-only --format= "$1"; }
+# Unquoted paths: git's default C-quotes non-ASCII names, which no pattern matches.
+files_of() { git -c core.quotePath=false show --name-only --format= "$1"; }
+# Test paths the commit adds or modifies — a deleted test proves nothing.
+tests_written_by() {
+  git -c core.quotePath=false show --name-status --format= "$1" \
+    | awk -F'\t' -v re="$TEST_RE" 'NF >= 2 && $1 !~ /^D/ && $NF ~ re'
+}
+# Diff of the given paths only, one path per line on stdin.
+diff_of() {
+  local sha="$1" paths=() p
+  while IFS= read -r p; do [ -n "$p" ] && paths+=("$p"); done
+  git -c core.quotePath=false show --format= -U0 "$sha" -- "${paths[@]}"
+}
 type_of() { git log -1 --format=%s "$1" | sed -nE 's/^([a-z]+)(\([^)]*\))?!?: .*/\1/p'; }
 
 echo "REVIEW COMMITS — $RANGE"
@@ -96,20 +111,18 @@ FOUND=0
 PENDING=""
 for sha in $COMMITS; do
   files="$(files_of "$sha")"
-  has_main=$(echo "$files" | grep -cE '^src/main/java/')
-  has_test=$(echo "$files" | grep -cE '^src/test/')
+  has_main=$(echo "$files" | grep -cE "$MAIN_RE")
+  has_test=$(tests_written_by "$sha" | grep -c .)
   owned="$(echo "$files" | grep -E "$SPEC_OWNED")"
   features="$(echo "$owned" | grep -E '\.feature$')"
   changes_scenario=0
   if [ -n "$owned" ]; then
-    # shellcheck disable=SC2086
-    if git show --format= -U0 "$sha" -- $owned | grep -vE '^(\+\+\+|---) ' | grep -qE "$SCENARIO_LINE"; then
+    if echo "$owned" | diff_of "$sha" | grep -vE '^(\+\+\+|---) ' | grep -qE "$SCENARIO_LINE"; then
       changes_scenario=1
     fi
   fi
   if [ "$changes_scenario" -eq 0 ] && [ -n "$features" ]; then
-    # shellcheck disable=SC2086
-    if git show --format= -U0 "$sha" -- $features | grep -vE '^(\+\+\+|---) ' | grep -qE "$GHERKIN_TABLE_ROW"; then
+    if echo "$features" | diff_of "$sha" | grep -vE '^(\+\+\+|---) ' | grep -qE "$GHERKIN_TABLE_ROW"; then
       changes_scenario=1
     fi
   fi

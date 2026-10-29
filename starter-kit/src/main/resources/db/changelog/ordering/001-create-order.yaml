@@ -1,0 +1,34 @@
+databaseChangeLog:
+  - changeSet:
+      id: ordering-001-create-order
+      author: starter
+      changes:
+        - createTable:
+            tableName: customer_order
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+        - createTable:
+            tableName: order_line
+            columns:
+              - column:
+                  name: order_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_order_line_order
+                    references: customer_order(id)
+              - column:
+                  name: product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quantity
+                  type: int
+                  constraints:
+                    nullable: false

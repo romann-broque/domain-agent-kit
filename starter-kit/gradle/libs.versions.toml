@@ -1,0 +1,35 @@
+[versions]
+spring-boot = "4.1.1"
+lombok = "1.18.48"
+archunit = "1.5.1"
+cucumber = "8.0.4"
+fixture-generator = "0.1.4"
+
+[libraries]
+spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-boot-starter-liquibase = { module = "org.springframework.boot:spring-boot-starter-liquibase" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
+h2 = { module = "com.h2database:h2" }
+postgresql = { module = "org.postgresql:postgresql" }
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+cucumber-java = { module = "io.cucumber:cucumber-java", version.ref = "cucumber" }
+cucumber-junit-platform-engine = { module = "io.cucumber:cucumber-junit-platform-engine", version.ref = "cucumber" }
+junit-platform-suite = { module = "org.junit.platform:junit-platform-suite" }
+fixture-annotations = { module = "io.github.romann-broque:fixture-annotations", version.ref = "fixture-generator" }
+fixture-processor = { module = "io.github.romann-broque:fixture-processor", version.ref = "fixture-generator" }
+
+[bundles]
+spring-boot-app = [
+  "spring-boot-starter-webmvc",
+  "spring-boot-starter-data-jpa",
+  "spring-boot-starter-validation",
+  "spring-boot-starter-liquibase",
+]
+cucumber = ["cucumber-java", "cucumber-junit-platform-engine", "junit-platform-suite"]
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }

@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - includeAll:
+      path: db/changelog/catalog/
+      errorIfMissingOrEmpty: false
+  - includeAll:
+      path: db/changelog/ordering/
+      errorIfMissingOrEmpty: false

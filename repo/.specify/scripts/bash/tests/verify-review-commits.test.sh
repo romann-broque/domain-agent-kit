@@ -48,15 +48,15 @@ merge_in() {
 }
 
 expect_exit() {
-  local name="$1" expected="$2" base="${3:-base}" output code
+  local name="$1" expected="$2" base="${3:-base}" pattern="${4:-}" output code
   output="$(cd "$REPO" && "$SCRIPT" "$base" HEAD 2>&1)"
   code=$?
-  if [ "$code" -eq "$expected" ]; then
+  if [ "$code" -eq "$expected" ] && { [ -z "$pattern" ] || echo "$output" | grep -qF -- "$pattern"; }; then
     PASSES=$((PASSES + 1))
     echo "  PASS  $name"
   else
     FAILURES=$((FAILURES + 1))
-    echo "  FAIL  $name — expected exit $expected, got $code"
+    echo "  FAIL  $name — expected exit $expected${pattern:+ and \"$pattern\"}, got $code"
     echo "$output" | sed 's/^/        | /'
   fi
   rm -rf "$REPO"
@@ -87,9 +87,30 @@ expect_exit "an amended requirement implemented without a test commit is drift" 
 
 new_repo; write_file "$SPEC" "- **FR-001**: the thing is kept"; write_file "$MAIN" "class Thing {}"; commit_all "feat(ctx): start"; mark_base
 write_file "$SPEC" "- **FR-001**: the thing is dropped"; commit_all "docs(spec): amend FR-001 after review"
-write_file "$TEST" "class ThingTest { void dropped() {} }"; commit_all "test(ctx): pin the dropped thing"
+write_file "$TEST" "class ThingTest {\n  // Covers: FR-001\n  void dropped() {} }"; commit_all "test(ctx): pin the dropped thing"
 write_file "$MAIN" "class Thing { int x; }"; commit_all "fix(ctx): drop the thing"
 expect_exit "an amended requirement, then its test, then its fix passes" 0
+
+new_repo; write_file "$SPEC" "- **FR-001**: the thing is kept"; write_file "$MAIN" "class Thing {}"; write_file "src/test/java/com/x/OtherTest.java" "class OtherTest {\n  // Covers: FR-007\n}"; commit_all "feat(ctx): start"; mark_base
+write_file "$SPEC" "- **FR-001**: the thing is dropped"; commit_all "docs(spec): amend FR-001 after review"
+write_file "src/test/java/com/x/OtherTest.java" "class OtherTest {\n  // Covers: FR-007\n  // typo fixed\n}"; commit_all "test(ctx): fix a typo in an unrelated test"
+write_file "$MAIN" "class Thing { int x; }"; commit_all "fix(ctx): drop the thing"
+expect_exit "a test for another requirement does not discharge an amended one" 1 base "implements the change"
+
+new_repo; write_file "$SPEC" "- **FR-001**: kept\n- **FR-002**: kept"; write_file "$MAIN" "class Thing {}"; commit_all "feat(ctx): start"; mark_base
+write_file "$SPEC" "- **FR-001**: dropped\n- **FR-002**: kept"; commit_all "docs(spec): amend FR-001"
+write_file "$SPEC" "- **FR-001**: dropped\n- **FR-002**: dropped"; commit_all "docs(spec): amend FR-002"
+write_file "$TEST" "class ThingTest {\n  // Covers: FR-002\n}"; commit_all "test(ctx): pin FR-002"
+write_file "$MAIN" "class Thing { int x; }"; commit_all "fix(ctx): drop both"
+expect_exit "a second amended requirement does not erase the first one still pending" 1 base "implements the change"
+
+new_repo; write_file "specs/001-thing/tasks.md" "- [ ] T001 [US1] [GATE] Run the tests"; commit_all "docs(spec): tasks"; mark_base
+write_file "specs/001-thing/tasks.md" "- [ ] T001 [US1] Run the tests"; commit_all "refactor(ctx): tidy up"
+expect_exit "a refactor that edits tasks.md is drift" 1 base "specs/001-thing/tasks.md"
+
+new_repo; write_file ".specify/memory/constitution.md" "Test-First Delivery is mandatory"; commit_all "docs(governance): constitution"; mark_base
+write_file ".specify/memory/constitution.md" "Tests are optional"; commit_all "refactor(ctx): tidy up"
+expect_exit "a refactor that edits the constitution is drift" 1 base "constitution.md"
 
 new_repo; mark_base
 write_file "$FEATURE" "Feature: Do a thing\n  Scenario: ✅ Works"; write_file "$MAIN" "class Thing {}"; commit_all "feat(ctx): do it all at once"
@@ -169,6 +190,22 @@ new_repo; write_file "$TEST" "  // Covers: US1"; commit_all "test(ctx): covers";
 switch_to base; write_file "$TEST" "  // Covers: US1, FR-009"; commit_all "test(ctx): covers on the base"
 switch_to main; write_file README.md "branch work"; commit_all "docs(ctx): branch work"
 expect_exit "a covers token added to the base after the fork is not a loss" 0
+
+new_repo; write_file "$TEST" "  // Covers: 001: US1, FR-001, FR-002\n  class ThingTest {\n    void one() {}\n    void two() {}\n    void three() {}\n  }"; commit_all "test(ctx): covers"; mark_base
+git -C "$REPO" mv "$TEST" src/test/java/com/x/ProductTest.java; write_file src/test/java/com/x/ProductTest.java "  class ThingTest {\n    void one() {}\n    void two() {}\n    void three() {}\n  }"; commit_all "test(ctx): rename"
+expect_exit "a renamed test that drops its covers group is drift" 1 base "lost the 001 group"
+
+new_repo; write_file "$TEST" "  // Covers: 001: US1, FR-001, FR-002\n  class ThingTest {}"; commit_all "test(ctx): covers"; mark_base
+git -C "$REPO" mv "$TEST" src/test/java/com/x/ProductTest.java; commit_all "test(ctx): rename"
+expect_exit "a renamed test that keeps its covers group passes" 0 base "1 file(s) keep every group"
+
+new_repo; write_file "$TEST" "  // Covers: 001: US1, FR-001"; commit_all "test(ctx): covers"; mark_base
+git -C "$REPO" rm -q "$TEST"; commit_all "test(ctx): drop the test"
+expect_exit "a deleted covered test cannot be checked" 2 base "removed"
+
+new_repo; write_file "$TEST" "  // Covers: 1000: US1, FR-001"; commit_all "test(ctx): covers"; mark_base
+write_file "$TEST" "  // Covers: 1000: US1"; commit_all "test(ctx): rewrite covers"
+expect_exit "a four-digit spec qualifier is read as a qualifier" 1 base "lost the 1000 group"
 
 new_repo; write_file "$FEATURE" "# Covers: US1, FR-001\nFeature: Do a thing"; commit_all "test(ctx): covers"; mark_base
 write_file "$FEATURE" "# Covers: US1, FR-001\nFeature: Do a thing\n"; commit_all "test(ctx): trailing line"

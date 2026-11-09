@@ -25,7 +25,7 @@ BASE_REF="${1:-${BASE_REF:-origin/main}}"
 HEAD_REF="${2:-HEAD}"
 
 CONVENTIONAL='^((feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|tech)(\([^)]+\))?!?: .+|Revert ".+")$'
-SPEC_OWNED='(\.feature$|^specs/[^/]+/spec\.md$|^specs/[^/]+/data-model\.md$|^specs/[^/]+/contracts/)'
+SPEC_OWNED='(\.feature$|^specs/[^/]+/(spec|plan|tasks|data-model|research)\.md$|^specs/[^/]+/(contracts|checklists)/|^\.specify/memory/)'
 SCENARIO_LINE='^[+-][[:space:]]*(Feature|Background|Rule|Scenario Outline|Scenario Template|Scenarios|Scenario|Examples|Example|Given|When|Then|And|But)([[:space:]:]|$)|^[+-].*(FR-[0-9]{3}|\*\*(Given|When|Then)\*\*)'
 GHERKIN_TABLE_ROW='^[+-][[:space:]]*\|'
 # Where production and test code live — same defaults as verify-implementation.sh.
@@ -108,7 +108,34 @@ echo
 # ------------------------------------------ a changed scenario is tested first
 echo "## A changed scenario or requirement is tested before it is implemented"
 FOUND=0
+# One line per change still waiting for its test: "<sha> <FR ids it touches>".
 PENDING=""
+# Requirements a test commit claims: FR ids in the test files it writes.
+claimed_by() {
+  local sha="$1" p
+  tests_written_by "$sha" | awk -F'\t' '{ print $NF }' | while IFS= read -r p; do
+    git -c core.quotePath=false show "$sha:$p" 2>/dev/null
+  done | grep -oE 'FR-[0-9]{3,}' | sort -u
+}
+# Keeps the pending changes a test commit does not answer. A change naming no FR
+# is answered by any test written; one naming FRs needs a test covering one of them.
+discharge() {
+  local claimed="$1" psha pfrs fr kept=""
+  while read -r psha pfrs; do
+    [ -z "$psha" ] && continue
+    if [ -n "$pfrs" ]; then
+      for fr in ${pfrs//,/ }; do
+        if echo "$claimed" | grep -qxF "$fr"; then pfrs=""; psha=""; break; fi
+      done
+    else
+      psha=""
+    fi
+    [ -n "$psha" ] && kept="$kept$psha $pfrs"$'\n'
+  done <<< "$PENDING"
+  PENDING="$kept"
+}
+pending_shas() { echo "$PENDING" | awk 'NF { printf "%s%s", (n++ ? ", " : ""), $1 }'; }
+
 for sha in $COMMITS; do
   files="$(files_of "$sha")"
   has_main=$(echo "$files" | grep -cE "$MAIN_RE")
@@ -116,9 +143,12 @@ for sha in $COMMITS; do
   owned="$(echo "$files" | grep -E "$SPEC_OWNED")"
   features="$(echo "$owned" | grep -E '\.feature$')"
   changes_scenario=0
+  changed_frs=""
   if [ -n "$owned" ]; then
-    if echo "$owned" | diff_of "$sha" | grep -vE '^(\+\+\+|---) ' | grep -qE "$SCENARIO_LINE"; then
+    changed="$(echo "$owned" | diff_of "$sha" | grep -vE '^(\+\+\+|---) ' | grep -E "$SCENARIO_LINE")"
+    if [ -n "$changed" ]; then
       changes_scenario=1
+      changed_frs="$(echo "$changed" | grep -oE 'FR-[0-9]{3,}' | sort -u | paste -sd, -)"
     fi
   fi
   if [ "$changes_scenario" -eq 0 ] && [ -n "$features" ]; then
@@ -132,23 +162,22 @@ for sha in $COMMITS; do
     echo "  DRIFT         $(label "$sha")"
     echo "                a scenario or requirement and production code change in one commit:"
     echo "                the failing test cannot have been observed"
-    PENDING=""
     continue
   fi
-  if [ "$has_main" -gt 0 ] && [ -n "$PENDING" ]; then
+  if [ "$has_main" -gt 0 ] && [ -n "$(pending_shas)" ]; then
     FOUND=1
     DRIFT=1
     echo "  DRIFT         $(label "$sha")"
-    echo "                implements the change of $PENDING with no test commit in between"
+    echo "                implements the change of $(pending_shas) with no test commit covering it in between"
     PENDING=""
   fi
   if [ "$changes_scenario" -eq 1 ] && [ "$has_test" -eq 0 ]; then
-    PENDING="$(git log -1 --format=%h "$sha")"
+    PENDING="$PENDING$(git log -1 --format=%h "$sha") $changed_frs"$'\n'
   elif [ "$has_test" -gt 0 ] && [ "$has_main" -eq 0 ]; then
-    PENDING=""
+    discharge "$(claimed_by "$sha")"
   fi
 done
-[ -n "$PENDING" ] && echo "  INFO          $PENDING changes a scenario or requirement; nothing implements it yet"
+[ -n "$(pending_shas)" ] && echo "  INFO          $(pending_shas) change(s) a scenario or requirement; nothing implements it yet"
 [ "$FOUND" -eq 0 ] && echo "  OK            every implemented scenario or requirement change was tested first"
 echo
 
@@ -164,7 +193,7 @@ covers_groups() {
       for (i = 1; i <= n; i++) {
         g = groups[i]
         q = ""
-        if (match(g, /^[[:space:]]*[0-9][0-9][0-9]:/)) {
+        if (match(g, /^[[:space:]]*[0-9][0-9][0-9][0-9]*:/)) {
           q = substr(g, RSTART, RLENGTH)
           gsub(/[[:space:]:]/, "", q)
           g = substr(g, RSTART + RLENGTH)
@@ -207,27 +236,38 @@ group_kept() {
 
 FOUND=0
 COMPARED=0
-COVERED_FILES="$(git grep -lE '(#|//)[[:space:]]*Covers:' "$FORK_POINT" -- src/test | sed "s|^$FORK_POINT:||")"
-for f in $COVERED_FILES; do
+COVERED_ON_BASE=0
+# Where each covered file of the base lives at HEAD, following renames.
+RENAMES="$(git -c core.quotePath=false diff --find-renames --name-status "$FORK_POINT" "$HEAD_REF" -- src/test \
+  | awk -F'\t' '$1 ~ /^R/ { print $2 "\t" $3 }')"
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  COVERED_ON_BASE=$((COVERED_ON_BASE + 1))
+  at_head="$f"
   if ! git cat-file -e "$HEAD_REF:$f" 2>/dev/null; then
-    echo "  INFO          $f removed or moved — not compared"
-    continue
+    at_head="$(echo "$RENAMES" | awk -F'\t' -v old="$f" '$1 == old { print $2; exit }')"
+    if [ -z "$at_head" ]; then
+      echo "  CANNOT CHECK  $f removed — its covers groups have nowhere to be kept"
+      echo "                confirm in the review-triage card that the requirement is covered elsewhere"
+      UNCHECKABLE=1
+      continue
+    fi
   fi
   COMPARED=$((COMPARED + 1))
-  head_groups="$(covers_groups "$HEAD_REF" "$f")"
+  head_groups="$(covers_groups "$HEAD_REF" "$at_head")"
   while IFS='|' read -r q toks; do
     [ -z "$toks" ] && continue
     if ! group_kept "$q" "$toks" "$head_groups"; then
       FOUND=1
       DRIFT=1
-      echo "  DRIFT         $f lost the ${q:-unqualified} group: $toks"
+      echo "  DRIFT         $at_head lost the ${q:-unqualified} group: $toks"
       echo "                a later spec qualifies every group (002: …; 005: …), it never overwrites one"
     fi
   done <<< "$(covers_groups "$FORK_POINT" "$f")"
-done
-if [ "$COMPARED" -eq 0 ]; then
+done <<< "$(git -c core.quotePath=false grep -lE '(#|//)[[:space:]]*Covers:' "$FORK_POINT" -- src/test | sed "s|^$FORK_POINT:||")"
+if [ "$COVERED_ON_BASE" -eq 0 ]; then
   echo "  INFO          no covers line on the base to compare"
-elif [ "$FOUND" -eq 0 ]; then
+elif [ "$FOUND" -eq 0 ] && [ "$COMPARED" -gt 0 ]; then
   echo "  OK            $COMPARED file(s) keep every group"
 fi
 echo

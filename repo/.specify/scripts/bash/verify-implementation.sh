@@ -13,7 +13,8 @@
 
 set -u
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)" || exit 2
+[ -n "$REPO_ROOT" ] || exit 2
 cd "$REPO_ROOT" || exit 2
 
 FEATURE_DIR="${1:-}"
@@ -61,11 +62,17 @@ else
       echo "  INFO          $id not checked yet — implementation must not have started"
       continue
     fi
-    # Evidence is whatever follows the gate task, up to the next task line.
-    evidence=$(awk -v start="$ln" 'NR>start { if ($0 ~ /^- \[[ xX]\] T[0-9]+ /) exit; print }' "$TASKS")
-    if [ -z "$(echo "$evidence" | tr -d '[:space:]')" ]; then
+    # Evidence is the pasted tool output: the fenced code blocks that follow the
+    # gate task, up to the next task line. Prose around them proves nothing.
+    region=$(awk -v start="$ln" 'NR>start { if ($0 ~ /^- \[[ xX]\] T[0-9]+ /) exit; print }' "$TASKS")
+    evidence=$(echo "$region" | awk '/^[[:space:]]*```/ { inside = !inside; next } inside')
+    if [ -z "$(echo "$region" | tr -d '[:space:]')" ]; then
       echo "  DRIFT         $id checked but no output pasted underneath."
       echo "                A gate without evidence is a claim, not a proof."
+      DRIFT=1
+    elif [ -z "$(echo "$evidence" | tr -d '[:space:]')" ]; then
+      echo "  DRIFT         $id checked, but no fenced code block holds the pasted output."
+      echo "                A sentence saying it failed is a claim, not a proof."
       DRIFT=1
     # A failure marker must be an actual failure. Matching a bare "fail" is a
     # trap: every green Gradle run prints "0 failures", so a passing output
@@ -150,9 +157,11 @@ echo
 echo "## Checked tasks that name a file"
 MISSING=0
 CHECKED=0
+set -f
 while IFS= read -r line; do
-  for path in $(echo "$line" | grep -oE '(src|docs|modules)/[][A-Za-z0-9_./{}-]+\.[a-z]+'); do
+  for path in $(echo "$line" | grep -oE '([A-Za-z0-9_.-]+/)+[][A-Za-z0-9_.{}-]+\.[A-Za-z0-9]+'); do
     case "$path" in *'['*|*'{'*) continue ;; esac
+    case "$line" in *"://$path"*) continue ;; esac
     CHECKED=$((CHECKED + 1))
     if [ ! -e "$path" ]; then
       id=$(echo "$line" | grep -oE 'T[0-9]+' | head -1)
@@ -162,6 +171,7 @@ while IFS= read -r line; do
     fi
   done
 done < <(grep -E '^- \[[xX]\] T[0-9]+ ' "$TASKS")
+set +f
 if [ "$CHECKED" -eq 0 ]; then
   echo "  INFO          no checked task names a concrete path"
 elif [ "$MISSING" -eq 0 ]; then

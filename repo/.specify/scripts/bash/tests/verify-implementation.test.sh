@@ -43,8 +43,8 @@ commit_all() {
 }
 
 write_tasks() {
-  local test_path="${2:-src/test/java/app/ThingTest.java}"
-  write_file specs/001-thing/tasks.md "# Tasks\n\n- [x] T001 [US1] Write $test_path\n- [x] T002 [GATE] Run the tests and paste the failure\n\n\`\`\`text\nBUILD FAILED\n\`\`\`\n\n- [x] T003 [US1] Implement $1"
+  local test_path="${2:-src/test/java/app/ThingTest.java}" evidence="${3-\`\`\`text\nBUILD FAILED\n\`\`\`}"
+  write_file specs/001-thing/tasks.md "# Tasks\n\n- [x] T001 [US1] Write $test_path\n- [x] T002 [GATE] Run the tests and paste the failure\n\n$evidence\n\n- [x] T003 [US1] Implement $1"
 }
 
 # expect_exit NAME EXPECTED_CODE [PATTERN] — PATTERN, when given, must appear in
@@ -110,6 +110,32 @@ write_file lib/thing.py "x = 1"
 commit_all "feat: thing"
 write_tasks "docs/none.md"
 expect_exit "a range touching code under no recognised layout cannot be checked" 2 "CANNOT CHECK"
+
+new_repo
+write_tasks "src/main/java/app/Thing.java" "" "I ran it and it FAILED, honest."
+expect_exit "gate evidence written as prose is drift" 1 "fenced code block"
+
+new_repo
+write_tasks "src/main/java/app/Thing.java" "" "\`\`\`text\nBUILD SUCCESSFUL in 3s\n\`\`\`\nIt FAILED before, trust me."
+expect_exit "a failure claimed outside the pasted output is drift" 1 "successful run"
+
+empty_repo
+write_file src/main/java/app/Thing.java "class Thing {}"
+commit_all "feat: thing"
+write_file src/test/java/app/ThingTest.java "class ThingTest {}"
+commit_all "test: thing"
+write_tasks "src/main/java/app/Thing.java"
+expect_exit "production code before its test is drift" 1 "production code committed with no preceding test commit"
+
+new_repo
+write_file app/src/main/res/layout.xml "<x/>"
+commit_all "chore: layout"
+write_tasks "\`app/src/main/res/missing.xml\`"
+expect_exit "a checked task naming a missing file outside src/ is drift" 1 "missing.xml"
+
+new_repo
+write_tasks "src/main/java/app/Thi[n]g.java"
+expect_exit "a bracketed path is never glob-expanded into a real file" 0 "1 declared path\(s\) exist"
 
 echo
 echo "$PASSES passed, $FAILURES failed"

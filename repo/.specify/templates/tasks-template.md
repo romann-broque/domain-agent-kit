@@ -100,7 +100,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T011 [P] [US1] Write the missing `*DataSet` fixtures in `src/test/java/[base/package/path]/fixture/[context]/...`
 - [ ] T012 [US1] Write step definitions in `src/test/java/[base/package/path]/behaviors/[context]/steps/[use_case]/[UseCase]Steps.java` (Mockito-mocked ports, no Spring context)
 - [ ] T013 [US1] Write the runner `src/test/java/[base/package/path]/behaviors/[context]/runners/[UseCase]BehaviorTest.java`
-- [ ] T014 [US1] **[GATE]** Run `./gradlew test --tests '[base.package].behaviors.[context].runners.[UseCase]BehaviorTest'`, **OBSERVE THE FAILURE**, and paste the failing output into this task.
+- [ ] T014 [US1] **[GATE]** Run `./gradlew test --tests '[base.package].behaviors.[context].runners.[UseCase]BehaviorTest'`, **OBSERVE THE FAILURE**, and paste the failing output into this task, inside a fenced code block.
       No implementation task below may start until this task is checked with an observed failing output.
       A run that passes here means the test is wrong — stop and report it.
 <!-- TDD:END -->
@@ -137,7 +137,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T022 [P] [US2] Write the missing `*DataSet` fixtures in `src/test/java/[base/package/path]/fixture/[context]/...`
 - [ ] T023 [US2] Write step definitions in `src/test/java/[base/package/path]/behaviors/[context]/steps/[use_case]/[UseCase]Steps.java` (Mockito-mocked ports, no Spring context)
 - [ ] T024 [US2] Write the runner `src/test/java/[base/package/path]/behaviors/[context]/runners/[UseCase]BehaviorTest.java`
-- [ ] T025 [US2] **[GATE]** Run `./gradlew test --tests '[base.package].behaviors.[context].runners.[UseCase]BehaviorTest'`, **OBSERVE THE FAILURE**, and paste the failing output into this task.
+- [ ] T025 [US2] **[GATE]** Run `./gradlew test --tests '[base.package].behaviors.[context].runners.[UseCase]BehaviorTest'`, **OBSERVE THE FAILURE**, and paste the failing output into this task, inside a fenced code block.
       No implementation task below may start until this task is checked with an observed failing output.
       A run that passes here means the test is wrong — stop and report it.
 <!-- TDD:END -->
@@ -172,7 +172,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T031 [P] [US3] Write the missing `*DataSet` fixtures in `src/test/java/[base/package/path]/fixture/[context]/...`
 - [ ] T032 [US3] Write step definitions in `src/test/java/[base/package/path]/behaviors/[context]/steps/[use_case]/[UseCase]Steps.java` (Mockito-mocked ports, no Spring context)
 - [ ] T033 [US3] Write the runner `src/test/java/[base/package/path]/behaviors/[context]/runners/[UseCase]BehaviorTest.java`
-- [ ] T034 [US3] **[GATE]** Run `./gradlew test --tests '[base.package].behaviors.[context].runners.[UseCase]BehaviorTest'`, **OBSERVE THE FAILURE**, and paste the failing output into this task.
+- [ ] T034 [US3] **[GATE]** Run `./gradlew test --tests '[base.package].behaviors.[context].runners.[UseCase]BehaviorTest'`, **OBSERVE THE FAILURE**, and paste the failing output into this task, inside a fenced code block.
       No implementation task below may start until this task is checked with an observed failing output.
       A run that passes here means the test is wrong — stop and report it.
 <!-- TDD:END -->

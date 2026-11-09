@@ -147,7 +147,7 @@ spec_prefix_exists() {
 # Function to clean and format a branch name
 clean_branch_name() {
     local name="$1"
-    echo "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//' | sed 's/-$//'
+    echo "$name" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-//; s/-$//'
 }
 
 # Fit a feature prefix and suffix within GitHub's branch-name limit.

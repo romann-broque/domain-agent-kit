@@ -15,7 +15,8 @@
 
 set -u
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)" || exit 2
+[ -n "$REPO_ROOT" ] || exit 2
 cd "$REPO_ROOT" || exit 2
 
 FEATURE_DIR="${1:-}"
@@ -31,7 +32,9 @@ fi
 
 SPEC="$FEATURE_DIR/spec.md"
 TASKS="$FEATURE_DIR/tasks.md"
-SPEC_NUMBER="$(basename "$FEATURE_DIR" | grep -oE '^[0-9]{3}')"
+# The spec number qualifies '# Covers:' groups: '001' for a sequential directory,
+# '20261028-141500' for one created with create-new-feature.sh --timestamp.
+SPEC_NUMBER="$(basename "$FEATURE_DIR" | sed -nE 's/^([0-9]{8}-[0-9]{6}|[0-9]+)-.*/\1/p')"
 
 for f in "$SPEC" "$TASKS"; do
   if [ ! -f "$f" ]; then
@@ -100,7 +103,7 @@ fi
 echo
 
 # ------------------------------------------------------------- untagged tasks
-echo "## Tasks tagged to a user story"
+echo "## Tasks tagged to a user story (statistic, not a check)"
 UNTAGGED=$(grep -nE '^- \[[ xX]\] T[0-9]+ ' "$TASKS" | grep -vE '\[US[0-9]+\]' | wc -l | tr -d ' ')
 echo "  INFO          $UNTAGGED task(s) carry no [USn] tag"
 echo "                (setup, foundational and polish tasks legitimately have none;"

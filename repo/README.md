@@ -44,6 +44,8 @@ you read the card, then type the next step.
 | 3 | `/speckit.clarify` | answers encoded into the spec |
 | 4 | `/speckit.plan` (+ `/speckit.checklist`) | `plan.md`, `research.md`, `data-model.md`, `contracts/` |
 | 5 | `/speckit.tasks` (+ `/speckit.analyze`) | `tasks.md` with a `[GATE]` after each test block |
+| 5b | `/speckit.taskstoissues` | one tracker issue per task — only on explicit request |
+| 5c | `/workflow.verify` | the joins ticket → spec → tasks, checked before any code |
 | 6 | `/speckit.implement` → `test-first` → `craftsman` | failing test (RED), then minimum code (GREEN) |
 | 7 | `/workflow.verify`, `code-reviewer`, `/speckit.converge` | evidence check, diff review, spec-vs-code gap |
 | 8 | `review-triage` skill | human PR comments classified and routed back to the right step |

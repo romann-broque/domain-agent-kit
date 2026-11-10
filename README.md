@@ -1,45 +1,82 @@
 # agentic-setup
 
-A project-agnostic catalogue of agentic configuration for [OpenCode](https://opencode.ai):
-global rules and skills, an optional personal layer, a spec-driven / test-first workflow
-for a repository, and a Java DDD starter-kit that compiles and passes its tests.
+Ready-to-copy configuration for [OpenCode](https://opencode.ai), the AI coding agent.
+Nothing installs itself: pick the part you need, copy it, adapt it.
 
-Nothing is installed automatically. Every folder is meant to be read, then copied by hand.
+## What is in it
 
+| Folder | What it is for | Where it goes |
+|---|---|---|
+| [`global/`](global/README.md) | Rules and skills the agent follows in **every** project: never push without asking, never write on GitHub, review a PR, write a PR description, write tests | `~/.config/opencode/` |
+| [`personal/`](personal/README.md) | Optional habits: a macOS notification each time the agent stops, `rtk` to shorten command output | `~/.config/opencode/` |
+| [`repo/`](repo/README.md) | A workflow for **one** project: a ticket becomes a spec, then tests, then code, and scripts check that nothing was lost on the way | the root of a project |
+| [`starter-kit/`](starter-kit/README.md) | An empty Java 21 / Spring Boot service already laid out for that workflow, with two tiny example features and tests that keep the layout honest | a new folder |
+
+`global/` and `personal/` change how the agent behaves. `repo/` and `starter-kit/` change a project.
+
+## Install what you need
+
+Run the commands from a clone of this repository.
+
+### The agent's global rules
+
+Requires the [Superpowers](https://github.com/obra/superpowers) plugin, which `global/` builds on.
+
+```bash
+mkdir -p ~/.config/opencode
+cp global/AGENTS.md ~/.config/opencode/AGENTS.md      # overwrites an existing file: merge by hand if you have one
+cp -R global/skills ~/.config/opencode/
 ```
-agentic-setup/
-├── global/       → ~/.config/opencode/        rules and skills for every project
-├── personal/     → optional, macOS-specific   notifications, CLI habits
-├── repo/         → root of a project          the workflow: AGENTS.md, skills, commands, spec-kit
-└── starter-kit/  → a new project              Spring Boot + DDD + ArchUnit + Cucumber + fixtures
+
+### The personal layer (optional, macOS)
+
+```bash
+cat personal/AGENTS.personal.md >> ~/.config/opencode/AGENTS.md
+mkdir -p ~/.config/opencode/plugins && cp personal/plugins/notify.ts ~/.config/opencode/plugins/
 ```
 
-## How to use
+### The workflow, in a project you already have
 
-1. **Global config** — install the [Superpowers](https://github.com/obra/superpowers) plugin, then copy
-   `global/AGENTS.md` and `global/skills/` into `~/.config/opencode/`. See [global/README.md](global/README.md).
-2. **Personal layer (optional)** — pick what you like from `personal/` and merge it into your
-   global `AGENTS.md` and `~/.config/opencode/plugins/`. See [personal/README.md](personal/README.md).
-3. **An existing project** — copy `repo/` to the project root, without its own README and
-   with its ignore rules appended, then adapt the constitution and `AGENTS.md`:
+```bash
+rsync -a --exclude /README.md --exclude /.gitignore.snippet repo/ <project>/
+cat repo/.gitignore.snippet >> <project>/.gitignore
+git -C <project> config core.hooksPath .githooks       # commit messages must follow Conventional Commits
+```
 
-   ```bash
-   rsync -a --exclude /README.md --exclude /.gitignore.snippet repo/ <project>/
-   cat repo/.gitignore.snippet >> <project>/.gitignore
-   ```
+Then replace the example package and contexts in `<project>/AGENTS.md` and
+`<project>/.specify/memory/constitution.md` with yours. [repo/README.md](repo/README.md) lists what to adapt.
 
-   See [repo/README.md](repo/README.md).
-4. **A new project** — copy `starter-kit/` to a new folder (`rsync -a --exclude /build
-   --exclude /.gradle starter-kit/ <project>/`), check that `./gradlew build` is green, then
-   copy `repo/` on top of it with the two commands of step 3 and start with the
-   `domain-challenge` skill. See [starter-kit/README.md](starter-kit/README.md).
+### A new project, with the workflow
 
-The workflow order and what each step produces are in [repo/docs/WORKFLOW.md](repo/docs/WORKFLOW.md).
+```bash
+rsync -a --exclude /README.md --exclude /build --exclude /.gradle starter-kit/ <project>/
+rsync -a --exclude /README.md --exclude /.gitignore.snippet repo/ <project>/
+cat repo/.gitignore.snippet >> <project>/.gitignore
+cd <project> && git init && git config core.hooksPath .githooks && ./gradlew build
+```
+
+The build must be green before you start. Write your own `README.md`, then give your first
+ticket to the `domain-challenge` skill. [starter-kit/README.md](starter-kit/README.md)
+explains the layout and how to replace the example contexts.
+
+## Using the workflow
+
+Once `repo/` is in a project, every ticket goes through the same steps:
+
+1. **Challenge the ticket** (`domain-challenge`): is it clear and small enough to start?
+2. **Specify** (`/speckit.specify`, `/speckit.clarify`): the ticket becomes user stories and acceptance scenarios.
+3. **Plan and split** (`/speckit.plan`, `/speckit.tasks`): a design, then a task list where tests come first.
+4. **Check before coding** (`/workflow.verify`): every requirement reached a task.
+5. **Implement** (`/speckit.implement`): a failing test, then the minimum code to pass it.
+6. **Check and review** (`/workflow.verify`, `code-reviewer`): tests really came first, the code matches the spec.
+7. **Handle PR comments** (`review-triage`): each comment goes back to the step it belongs to.
+
+The agent stops after each step and shows what it decided, assumed and is unsure of.
+[repo/docs/WORKFLOW.md](repo/docs/WORKFLOW.md) has every step and command.
 
 ## Credits
 
-- [spec-kit](https://github.com/github/spec-kit) (MIT) — the `speckit.*` commands, templates and
-  scripts derive from it.
+- [spec-kit](https://github.com/github/spec-kit) (MIT): the `speckit.*` commands, templates and scripts derive from it.
 - `skill-creator` is adapted from Anthropic's skill-creator (Apache-2.0).
 - Fixtures are generated by [java-fixture-generator](https://github.com/romann-broque/java-fixture-generator)
   (Apache-2.0), used as a Maven Central dependency.

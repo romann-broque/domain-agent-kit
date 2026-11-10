@@ -20,10 +20,11 @@ repo/
 │   │                          test-first, craftsman, code-reviewer, review-triage
 │   └── commands/              speckit.* (spec-kit, customised) + workflow.verify
 ├── .specify/
-│   ├── memory/constitution.md the project constitution (v1.0.0, to adapt)
+│   ├── memory/constitution.md the project constitution (to adapt)
 │   ├── templates/             spec, plan, tasks, checklist, constitution, domain context, open point
 │   ├── scripts/bash/          spec-kit scripts + verify-* mechanical checks (and their tests)
 │   └── workflows/             spec-kit workflow definition
+├── .githooks/commit-msg       Conventional Commits check — enable with git config core.hooksPath .githooks
 ├── .github/pull_request_template.md
 └── .gitignore.snippet         lines to append to the project's .gitignore
 ```

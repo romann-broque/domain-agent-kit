@@ -1,6 +1,8 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.0 → 1.2.0
+- Version change: 1.2.0 → 1.2.1
+- 1.2.1 (PATCH): Principle III — the quoted commit regex now matches `.githooks/commit-msg`
+  (digits allowed in the scope).
 - 1.2.0 (MINOR): Principle II — a `Background:` shared by every rule sits at feature
   level, one specific to a rule inside it (was: "may use a `Background:` inside a `Rule:`").
 - 1.1.0 (MINOR): Principle II — an anti-corruption layer is a second exception to "no
@@ -209,7 +211,7 @@ Commit messages MUST follow Conventional Commits, matching the regex enforced by
 `.githooks/commit-msg`:
 
 ```
-^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z \-]+\))?!?: .+$
+^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9 \-]+\))?!?: .+$
 ```
 
 Releases follow Semantic Versioning. Amendments to this constitution are versioned
@@ -386,4 +388,4 @@ Compliance is expected to be verifiable. A rule that cannot be checked — by a 
 a hook, a linter or an explicit review step — belongs in `AGENTS.md` as guidance,
 not here as law.
 
-**Version**: 1.2.0 | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [RATIFICATION_DATE]
+**Version**: 1.2.1 | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [RATIFICATION_DATE]

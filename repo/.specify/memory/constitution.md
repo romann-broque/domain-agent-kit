@@ -1,7 +1,9 @@
 <!--
 Sync Impact Report
-- Version change: none → 1.0.0
-- Ratified from the agentic-setup catalogue; principles I–V, constraints, workflow and governance.
+- Version change: 1.0.0 → 1.1.0
+- 1.1.0 (MINOR): Principle II — an anti-corruption layer is a second exception to "no
+  test on infrastructure", alongside cross-cutting technical logic in `core`.
+- 1.0.0: ratified from the agentic-setup catalogue; principles I–V, constraints, workflow and governance.
 - Templates reviewed: spec-template.md ✅, plan-template.md ✅, tasks-template.md ✅
 - Follow-up: set [RATIFICATION_DATE]; replace `com.example.starter` with your base package.
 -->
@@ -147,8 +149,9 @@ Every change MUST first be classified:
   such as uniqueness or the existence of a referenced item is guaranteed by the use
   case, through its ports, and is therefore covered by its behavior test. A rule
   found living in an adapter is a defect to move up, not a reason to test the adapter.
-  The single exception is cross-cutting technical logic in `core` — security, error
-  handling, attribution — which is unit-tested like business code.
+  There are two exceptions, both unit-tested like business code: an anti-corruption
+  layer under `infrastructure/acl`, whose translation is a contract between contexts,
+  and cross-cutting technical logic in `core` — security, error handling, attribution.
 - **A change with no behavioural surface** — configuration, build files,
   documentation — → no test is required, and this exemption MUST NOT be stretched to
   cover business code.
@@ -380,4 +383,4 @@ Compliance is expected to be verifiable. A rule that cannot be checked — by a 
 a hook, a linter or an explicit review step — belongs in `AGENTS.md` as guidance,
 not here as law.
 
-**Version**: 1.0.0 | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [RATIFICATION_DATE]
+**Version**: 1.1.0 | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [RATIFICATION_DATE]

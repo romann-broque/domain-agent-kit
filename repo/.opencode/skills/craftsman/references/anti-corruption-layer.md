@@ -139,11 +139,10 @@ package fails the build.
 
 - The downstream's behaviour test mocks **the port** (`OrderedProductChecker`), never
   the ACL and never the upstream.
-- The ACL needs no test by default (Constitution Principle II: `infrastructure`
-  translates). Its boundary is held by `BoundedContextIsolationRulesTest`; its wiring by
-  the smoke test, which adds a product then orders it. The starter does carry
-  `OrderedProductCheckerAclTest`, a plain unit test mocking the upstream port: write one
-  only when the translation itself is worth pinning.
+- The ACL gets a unit test mocking the upstream port — Constitution Principle II owns
+  this rule (`OrderedProductCheckerAclTest` is the example). Its boundary is held by
+  `BoundedContextIsolationRulesTest`; its wiring by the smoke test, which adds a product
+  then orders it.
 
 ## Rules
 

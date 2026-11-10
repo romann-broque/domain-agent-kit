@@ -39,7 +39,8 @@ The first question, before any code quality consideration:
 - Does every new or modified use case have a `.feature` file?
 - Does every business model change have a unit test?
 - Is there a test on `infrastructure` or `presentation` (adapter, mapper, repository,
-  controller) outside cross-cutting technical logic in `core`? It is a 🟡 finding: delete
+  controller) outside an anti-corruption layer and cross-cutting technical logic in
+  `core`? It is a 🟡 finding: delete
   it. If it pins a rule — uniqueness, existence — that rule is in the wrong layer; it
   belongs to the use case and its behavior test, which makes it a 🔴.
 - Do the tests assert on behaviour, or merely mirror the implementation?

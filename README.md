@@ -55,6 +55,27 @@ The two example contexts show every convention once; you replace them with your 
 Every ticket goes through the same chain. Each step ends with a card listing what the agent
 **decided**, **assumed** and is **unsure of**; nothing moves on until you type the next step.
 
+| Folder | What it is for | Where it goes |
+|---|---|---|
+| [`global/`](global/README.md) | Rules and skills the agent follows in **every** project: never push without asking, never write on GitHub, review a PR, write a PR description, write tests | `~/.config/opencode/` |
+| [`personal/`](personal/README.md) | Optional habits: a macOS notification each time the agent stops, `rtk` to shorten command output | `~/.config/opencode/` |
+| [`repo/`](repo/README.md) | A workflow for **one** project: a ticket becomes a spec, then tests, then code, and scripts check that nothing was lost on the way | the root of a project |
+| [`starter-kit/`](starter-kit/README.md) | An empty Java 21 / Spring Boot service already laid out for that workflow, with two tiny example features and tests that keep the layout honest | a new folder |
+
+`global/` and `personal/` change how the agent behaves. `repo/` and `starter-kit/` change a project.
+
+## Install what you need
+
+Run the commands from a clone of this repository.
+
+### The agent's global rules
+
+Requires the [Superpowers](https://github.com/obra/superpowers) plugin, which `global/` builds on.
+
+```bash
+mkdir -p ~/.config/opencode
+cp global/AGENTS.md ~/.config/opencode/AGENTS.md      # overwrites an existing file: merge by hand if you have one
+cp -R global/skills ~/.config/opencode/
 ```
 ticket ──▶ domain-challenge ──▶ spec ──▶ plan ──▶ tasks ──▶ verify ──▶ test (RED) ──▶ code (GREEN) ──▶ verify + review ──▶ PR
               │        ▲                                                                                                │

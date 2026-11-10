@@ -57,6 +57,12 @@ No Spring annotation here. `DomainException` is mapped to HTTP 400 by
 A value object is a `record` that **refuses to exist in an invalid state**. Validation
 lives in the compact constructor, one named `require*` guard per rule, and nowhere else.
 
+A record compares its components with their own `equals`, so the compact constructor
+also **reduces the value to one canonical form** once it is valid: `ProductName` trims,
+and a `BigDecimal` amount is stored `stripTrailingZeros()`, because `BigDecimal.equals`
+treats `24.9` and `24.90` as different. Two values that mean the same thing must be
+equal; a test asserts it.
+
 **Scalar VO with rules:**
 
 ```java
@@ -315,6 +321,8 @@ The use case emits it through the `core` `EventEmitter` port after saving.
 ## Checklist
 
 - [ ] Every new value object is a `record` validating in its compact constructor.
+- [ ] Every value object stores a canonical form: two values meaning the same thing are
+      `equals` (trimmed text, `stripTrailingZeros()` on a `BigDecimal`).
 - [ ] Every validation failure throws a `DomainException` subclass, never a raw
       `NullPointerException` or `IllegalArgumentException`.
 - [ ] The aggregate root's fields are `final`, except those its mutators change.

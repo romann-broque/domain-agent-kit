@@ -1,6 +1,8 @@
 <!--
 Sync Impact Report
-- Version change: 1.2.0 → 1.2.1
+- Version change: 1.2.1 → 1.3.0
+- 1.3.0 (MINOR): Principle I — a value object stores one canonical representation, so
+  that two values meaning the same thing are equal.
 - 1.2.1 (PATCH): Principle III — the quoted commit regex now matches `.githooks/commit-msg`
   (digits allowed in the scope).
 - 1.2.0 (MINOR): Principle II — a `Background:` shared by every rule sits at feature
@@ -78,7 +80,9 @@ is the end. Therefore:
 - **Aggregates guard invariants.** An aggregate root is the consistency boundary of
   its cluster. Its internals MUST NOT be mutated from outside: every change goes
   through a method on the root, which rejects any transition that would break an
-  invariant. A value object MUST refuse construction with invalid data.
+  invariant. A value object MUST refuse construction with invalid data, and MUST store
+  one canonical representation of its value — two values that mean the same thing are
+  equal and share a hash code.
 - **No anemic domain model.** Business rules live in the `domain` layer. A use case
   orchestrates — it loads, delegates to the model, and persists. A use case that
   reads an aggregate's state, computes a decision and writes the result back has
@@ -388,4 +392,4 @@ Compliance is expected to be verifiable. A rule that cannot be checked — by a 
 a hook, a linter or an explicit review step — belongs in `AGENTS.md` as guidance,
 not here as law.
 
-**Version**: 1.2.1 | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [RATIFICATION_DATE]
+**Version**: 1.3.0 | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [RATIFICATION_DATE]

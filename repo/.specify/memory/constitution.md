@@ -1,6 +1,8 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 → 1.1.0
+- Version change: 1.1.0 → 1.2.0
+- 1.2.0 (MINOR): Principle II — a `Background:` shared by every rule sits at feature
+  level, one specific to a rule inside it (was: "may use a `Background:` inside a `Rule:`").
 - 1.1.0 (MINOR): Principle II — an anti-corruption layer is a second exception to "no
   test on infrastructure", alongside cross-cutting technical logic in `core`.
 - 1.0.0: ratified from the agentic-setup catalogue; principles I–V, constraints, workflow and governance.
@@ -169,7 +171,8 @@ MUST stop and the anomaly MUST be reported.
 **Behavior test conventions.** Feature files live at
 `src/test/resources/behaviors/{context}/{use_case}.feature`. A feature opens with a
 `# Covers:` header, then `As a / I want / So that`, groups its scenarios under `Rule:`
-blocks, may use a `Background:` inside a `Rule:`, and prefixes each scenario title
+blocks — a `Background:` shared by every rule sits at feature level, one specific to a
+rule sits inside that `Rule:` — and prefixes each scenario title
 with ✅ for a success path or ❌ for a failure path. Each feature has exactly one runner
 class in `behaviors/{context}/runners/`, annotated `@Suite @IncludeEngines("cucumber")`
 with its glue package scoped to that single feature and an HTML report emitted under
@@ -383,4 +386,4 @@ Compliance is expected to be verifiable. A rule that cannot be checked — by a 
 a hook, a linter or an explicit review step — belongs in `AGENTS.md` as guidance,
 not here as law.
 
-**Version**: 1.1.0 | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [RATIFICATION_DATE]
+**Version**: 1.2.0 | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [RATIFICATION_DATE]

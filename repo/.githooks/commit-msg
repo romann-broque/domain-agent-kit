@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Rejects commit messages that do not follow Conventional Commits.
+# Enable once per clone: git config core.hooksPath .githooks
+
+conventional_commit_regex="^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9 \-]+\))?!?: .+$"
+
+commit_message=$(head -n 1 "$1")
+
+if [[ "$commit_message" =~ $conventional_commit_regex ]]; then
+  exit 0
+fi
+
+echo "The commit message does not follow Conventional Commits."
+echo "Expected: type(scope): terse description"
+echo "  where type is build, chore, ci, docs, feat, fix, perf, refactor, revert, style or test"
+echo "Example: feat(ordering): refuse an order with no line"
+echo "See https://www.conventionalcommits.org/en/v1.0.0/#summary"
+exit 1

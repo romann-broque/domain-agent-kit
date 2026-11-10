@@ -1,7 +1,15 @@
 <!--
 Sync Impact Report
-- Version change: none → 1.0.0
-- Ratified from the agentic-setup catalogue; principles I–V, constraints, workflow and governance.
+- Version change: 1.2.1 → 1.3.0
+- 1.3.0 (MINOR): Principle I — a value object stores one canonical representation, so
+  that two values meaning the same thing are equal.
+- 1.2.1 (PATCH): Principle III — the quoted commit regex now matches `.githooks/commit-msg`
+  (digits allowed in the scope).
+- 1.2.0 (MINOR): Principle II — a `Background:` shared by every rule sits at feature
+  level, one specific to a rule inside it (was: "may use a `Background:` inside a `Rule:`").
+- 1.1.0 (MINOR): Principle II — an anti-corruption layer is a second exception to "no
+  test on infrastructure", alongside cross-cutting technical logic in `core`.
+- 1.0.0: ratified from the agentic-setup catalogue; principles I–V, constraints, workflow and governance.
 - Templates reviewed: spec-template.md ✅, plan-template.md ✅, tasks-template.md ✅
 - Follow-up: set [RATIFICATION_DATE]; replace `com.example.starter` with your base package.
 -->
@@ -72,7 +80,9 @@ is the end. Therefore:
 - **Aggregates guard invariants.** An aggregate root is the consistency boundary of
   its cluster. Its internals MUST NOT be mutated from outside: every change goes
   through a method on the root, which rejects any transition that would break an
-  invariant. A value object MUST refuse construction with invalid data.
+  invariant. A value object MUST refuse construction with invalid data, and MUST store
+  one canonical representation of its value — two values that mean the same thing are
+  equal and share a hash code.
 - **No anemic domain model.** Business rules live in the `domain` layer. A use case
   orchestrates — it loads, delegates to the model, and persists. A use case that
   reads an aggregate's state, computes a decision and writes the result back has
@@ -147,8 +157,9 @@ Every change MUST first be classified:
   such as uniqueness or the existence of a referenced item is guaranteed by the use
   case, through its ports, and is therefore covered by its behavior test. A rule
   found living in an adapter is a defect to move up, not a reason to test the adapter.
-  The single exception is cross-cutting technical logic in `core` — security, error
-  handling, attribution — which is unit-tested like business code.
+  There are two exceptions, both unit-tested like business code: an anti-corruption
+  layer under `infrastructure/acl`, whose translation is a contract between contexts,
+  and cross-cutting technical logic in `core` — security, error handling, attribution.
 - **A change with no behavioural surface** — configuration, build files,
   documentation — → no test is required, and this exemption MUST NOT be stretched to
   cover business code.
@@ -166,7 +177,8 @@ MUST stop and the anomaly MUST be reported.
 **Behavior test conventions.** Feature files live at
 `src/test/resources/behaviors/{context}/{use_case}.feature`. A feature opens with a
 `# Covers:` header, then `As a / I want / So that`, groups its scenarios under `Rule:`
-blocks, may use a `Background:` inside a `Rule:`, and prefixes each scenario title
+blocks — a `Background:` shared by every rule sits at feature level, one specific to a
+rule sits inside that `Rule:` — and prefixes each scenario title
 with ✅ for a success path or ❌ for a failure path. Each feature has exactly one runner
 class in `behaviors/{context}/runners/`, annotated `@Suite @IncludeEngines("cucumber")`
 with its glue package scoped to that single feature and an HTML report emitted under
@@ -203,7 +215,7 @@ Commit messages MUST follow Conventional Commits, matching the regex enforced by
 `.githooks/commit-msg`:
 
 ```
-^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z \-]+\))?!?: .+$
+^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9 \-]+\))?!?: .+$
 ```
 
 Releases follow Semantic Versioning. Amendments to this constitution are versioned
@@ -380,4 +392,4 @@ Compliance is expected to be verifiable. A rule that cannot be checked — by a 
 a hook, a linter or an explicit review step — belongs in `AGENTS.md` as guidance,
 not here as law.
 
-**Version**: 1.0.0 | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [RATIFICATION_DATE]
+**Version**: 1.3.0 | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [RATIFICATION_DATE]

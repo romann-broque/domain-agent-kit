@@ -167,7 +167,9 @@ mock the `EventEmitter` and capture what it was handed.
 An aggregate root is a `class`, equal by identity, whose mutators change it in place —
 `Product.changePrice`. A mutator never returns a modified copy: an aggregate has one
 life, and a copy would be a second aggregate with the same identity. Its value objects
-stay immutable `record`s.
+stay immutable `record`s, each storing one canonical form of its value — `ProductName`
+trims, a decimal amount strips its trailing zeros — so that equality is by meaning, not
+by representation.
 
 ### Constructor guards
 

@@ -245,7 +245,8 @@ unverifiable.
 - [ ] Feature and scenario titles are short and plain: the use case as an action, and
       two to eight words saying what makes each case different.
 - [ ] Scenarios grouped under `Rule:`.
-- [ ] `Background:` sits **inside** a `Rule:`, never at feature level.
+- [ ] A `Background:` shared by every `Rule:` sits at feature level; one specific to a
+      rule sits inside that `Rule:`. The same `Background:` is never repeated in each rule.
 - [ ] One runner per feature; the glue package is scoped to that feature's own step
       package and to nothing else.
 - [ ] HTML report at `build/reports/behaviors/{context}/{use-case}.html`.

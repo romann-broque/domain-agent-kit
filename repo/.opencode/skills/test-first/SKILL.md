@@ -18,6 +18,7 @@ Decide which kind of test is required. This determines everything that follows.
 | Creates or modifies a use case | Cucumber behavior test |
 | Touches an aggregate, entity, value object or command | Unit test |
 | Touches only `infrastructure` or `presentation` — adapter, JPA entity, repository, mapper, controller, DTO, changelog | No test — say so and stop. A uniqueness or existence rule is the use case's, covered by its behavior test |
+| Touches an anti-corruption layer under `infrastructure/acl` | Unit test, mocking the upstream port |
 | Touches cross-cutting technical logic in `core` — security, error handling, event emission | Unit test |
 | Touches only build files, configuration or documentation | No test — say so and stop |
 

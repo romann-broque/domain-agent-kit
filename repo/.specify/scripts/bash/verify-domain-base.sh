@@ -27,7 +27,8 @@
 
 set -uo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)" || exit 2
+[ -n "$REPO_ROOT" ] || exit 2
 cd "$REPO_ROOT" || exit 2
 
 BASE="docs/domain"
@@ -382,7 +383,7 @@ else
       [ -z "${item:-}" ] && continue
       if ! grep -rqF "[blocked: $op]" "$BASE" 2>/dev/null; then
         finding "$op declares it blocks \"$item\" but no line under $BASE carries [blocked: $op]"
-      elif ! grep -rnF "[blocked: $op]" "$BASE" 2>/dev/null | grep -qF "$item"; then
+      elif ! grep -rhF "[blocked: $op]" "$BASE" 2>/dev/null | grep -qF "$item"; then
         marked=$(grep -rnF "[blocked: $op]" "$BASE" 2>/dev/null | cut -d: -f1,2 | tr '\n' ' ' | sed 's/ *$//')
         finding "$op declares it blocks \"$item\" but no line carrying [blocked: $op] names it — marker found at: $marked"
       fi
@@ -761,25 +762,35 @@ printf '\n'
 
 # ===========================================================================
 # 8. Nobody is named — docs/domain/README.md § *Nobody is named*.
-#    The only list of names a script can know is the commit authors'. Each word
-#    of four letters or more in a human author's name is searched, whole word and
-#    regardless of case, so a name the line wrap split in two is still caught.
+#    The only list of names a script can know is the commit authors'. Each human
+#    author's full name is searched, whole words and regardless of case, on one
+#    line or across two, so a name the line wrap split in two is still caught.
+#    A single word of a name is not searched: 'Price' is a domain word long
+#    before it is anyone's surname.
 # ===========================================================================
 printf '== 8. No commit author is named in the base\n'
 info "a statement is attributed to a role, never to a person (docs/domain/README.md, Nobody is named)"
-author_words=$(git log --format='%an' 2>/dev/null | grep -v '\[bot\]' | tr ' ' '\n' \
-  | awk 'length($0) >= 4' | LC_ALL=C sort -fu)
-if [ -z "$author_words" ]; then
+author_names=$(git log --format='%an' 2>/dev/null | grep -v '\[bot\]' \
+  | awk '{ gsub(/[[:punct:][:space:]]+/, " "); gsub(/^ | $/, ""); if (length($0) >= 4) print }' \
+  | LC_ALL=C sort -fu)
+if [ -z "$author_names" ]; then
   nocheck "no human commit author could be read from git; there was no name to search for"
 else
-  n_words=0
-  while IFS= read -r w; do
-    n_words=$((n_words + 1))
+  n_names=0
+  while IFS= read -r name; do
+    n_names=$((n_names + 1))
     while IFS= read -r hit; do
-      finding "${hit%%:*}: names '$w', a commit author — at line $(printf '%s' "$hit" | cut -d: -f2)"
-    done < <(grep -rniwF --include='*.md' -- "$w" "$BASE" | cut -d: -f1,2)
-  done < <(printf '%s\n' "$author_words")
-  info "words searched, taken from the names of human commit authors: $n_words"
+      finding "${hit%%:*}: names '$name', a commit author — at line ${hit#*:}"
+    done < <(domain_files | while IFS= read -r f; do
+      awk -v name="$name" -v file="$f" '
+        function norm(s) { s = tolower(s); gsub(/[[:punct:][:space:]]+/, " ", s); return " " s " " }
+        function has(s) { return index(norm(s), norm(name)) > 0 }
+        NR > 1 && !has(prev) && !has($0) && has(prev " " $0) { print file ":" NR - 1 }
+        has($0) { print file ":" NR }
+        { prev = $0 }' "$f"
+    done)
+  done < <(printf '%s\n' "$author_names")
+  info "names searched, taken from the human commit authors: $n_names"
 fi
 printf '\n'
 

@@ -13,7 +13,8 @@
 
 set -u
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)" || exit 2
+[ -n "$REPO_ROOT" ] || exit 2
 cd "$REPO_ROOT" || exit 2
 
 FEATURE_DIR="${1:-}"
@@ -33,6 +34,13 @@ if [ ! -f "$TASKS" ]; then
 fi
 
 BASE_REF="${BASE_REF:-origin/main}"
+
+# Where production and test code live. The defaults match any module depth and
+# any JVM language; a project laid out otherwise sets both variables.
+MAIN_RE="${SPECIFY_MAIN_RE:-(^|/)src/main/}"
+TEST_RE="${SPECIFY_TEST_RE:-(^|/)src/test/}"
+# Paths that are never code: a range touching only these has nothing to order.
+NOT_CODE_RE='(^|/)(specs|docs)/|^\.(specify|opencode|github)/|\.md$|(^|/)\.gitignore$'
 
 DRIFT=0
 UNCHECKABLE=0
@@ -54,11 +62,17 @@ else
       echo "  INFO          $id not checked yet — implementation must not have started"
       continue
     fi
-    # Evidence is whatever follows the gate task, up to the next task line.
-    evidence=$(awk -v start="$ln" 'NR>start { if ($0 ~ /^- \[[ xX]\] T[0-9]+ /) exit; print }' "$TASKS")
-    if [ -z "$(echo "$evidence" | tr -d '[:space:]')" ]; then
+    # Evidence is the pasted tool output: the fenced code blocks that follow the
+    # gate task, up to the next task line. Prose around them proves nothing.
+    region=$(awk -v start="$ln" 'NR>start { if ($0 ~ /^- \[[ xX]\] T[0-9]+ /) exit; print }' "$TASKS")
+    evidence=$(echo "$region" | awk '/^[[:space:]]*```/ { inside = !inside; next } inside')
+    if [ -z "$(echo "$region" | tr -d '[:space:]')" ]; then
       echo "  DRIFT         $id checked but no output pasted underneath."
       echo "                A gate without evidence is a claim, not a proof."
+      DRIFT=1
+    elif [ -z "$(echo "$evidence" | tr -d '[:space:]')" ]; then
+      echo "  DRIFT         $id checked, but no fenced code block holds the pasted output."
+      echo "                A sentence saying it failed is a claim, not a proof."
       DRIFT=1
     # A failure marker must be an actual failure. Matching a bare "fail" is a
     # trap: every green Gradle run prints "0 failures", so a passing output
@@ -91,10 +105,18 @@ else
   TEST_FIRST=1
   SEEN_TEST=0
   SEEN_MAIN=0
-  for sha in $(git rev-list --reverse "$RANGE"); do
-    files=$(git show --name-only --pretty=format: "$sha")
-    has_test=$(echo "$files" | grep -cE '^src/test/')
-    has_main=$(echo "$files" | grep -cE '^src/main/java/')
+  SEEN_OTHER=0
+  for sha in $(git rev-list --reverse --first-parent --no-merges "$RANGE"); do
+    # One "STATUS<TAB>PATH" line per file; a rename keeps its new path. A
+    # deleted test proves nothing was written first, so it does not count.
+    changes=$(git -c core.quotePath=false show --name-status --pretty=format: "$sha" \
+      | awk -F'\t' 'NF >= 2 { print substr($1, 1, 1) "\t" $NF }')
+    has_test=$(echo "$changes" | awk -F'\t' -v re="$TEST_RE" '$1 != "D" && $2 ~ re' | grep -c .)
+    has_main=$(echo "$changes" | awk -F'\t' -v re="$MAIN_RE" '$2 ~ re' | grep -c .)
+    has_other=$(echo "$changes" \
+      | awk -F'\t' -v m="$MAIN_RE" -v t="$TEST_RE" -v n="$NOT_CODE_RE" '$2 !~ m && $2 !~ t && $2 !~ n' \
+      | grep -c .)
+    [ "$has_other" -gt 0 ] && SEEN_OTHER=1
     if [ "$has_test" -gt 0 ] && [ "$has_main" -gt 0 ]; then
       MIXED=1
       echo "  UNVERIFIABLE  $(git log -1 --format='%h %s' "$sha")"
@@ -110,8 +132,12 @@ else
       SEEN_TEST=1
     fi
   done
-  if [ "$SEEN_TEST" -eq 0 ] && [ "$SEEN_MAIN" -eq 0 ] && [ "$MIXED" -eq 0 ]; then
-    echo "  INFO          no Java source touched in $RANGE"
+  if [ "$SEEN_TEST" -eq 0 ] && [ "$SEEN_MAIN" -eq 0 ] && [ "$MIXED" -eq 0 ] && [ "$SEEN_OTHER" -eq 1 ]; then
+    echo "  CANNOT CHECK  $RANGE changes code, but none of it under $MAIN_RE or $TEST_RE."
+    echo "                Set SPECIFY_MAIN_RE and SPECIFY_TEST_RE to this project's layout."
+    UNCHECKABLE=1
+  elif [ "$SEEN_TEST" -eq 0 ] && [ "$SEEN_MAIN" -eq 0 ] && [ "$MIXED" -eq 0 ]; then
+    echo "  INFO          no source touched in $RANGE"
   elif [ "$MIXED" -eq 1 ]; then
     echo "  VERDICT       order not verifiable for at least one commit."
     echo "                Reported as unverifiable, never as compliant."
@@ -131,9 +157,11 @@ echo
 echo "## Checked tasks that name a file"
 MISSING=0
 CHECKED=0
+set -f
 while IFS= read -r line; do
-  for path in $(echo "$line" | grep -oE '(src|docs|modules)/[][A-Za-z0-9_./{}-]+\.[a-z]+'); do
+  for path in $(echo "$line" | grep -oE '([A-Za-z0-9_.-]+/)+[][A-Za-z0-9_.{}-]+\.[A-Za-z0-9]+'); do
     case "$path" in *'['*|*'{'*) continue ;; esac
+    case "$line" in *"://$path"*) continue ;; esac
     CHECKED=$((CHECKED + 1))
     if [ ! -e "$path" ]; then
       id=$(echo "$line" | grep -oE 'T[0-9]+' | head -1)
@@ -143,6 +171,7 @@ while IFS= read -r line; do
     fi
   done
 done < <(grep -E '^- \[[xX]\] T[0-9]+ ' "$TASKS")
+set +f
 if [ "$CHECKED" -eq 0 ]; then
   echo "  INFO          no checked task names a concrete path"
 elif [ "$MISSING" -eq 0 ]; then

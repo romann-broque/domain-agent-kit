@@ -15,7 +15,8 @@
 
 set -u
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)" || exit 2
+[ -n "$REPO_ROOT" ] || exit 2
 cd "$REPO_ROOT" || exit 2
 
 FEATURE_DIR="${1:-}"
@@ -31,7 +32,9 @@ fi
 
 SPEC="$FEATURE_DIR/spec.md"
 TASKS="$FEATURE_DIR/tasks.md"
-SPEC_NUMBER="$(basename "$FEATURE_DIR" | grep -oE '^[0-9]{3}')"
+# The spec number qualifies '# Covers:' groups: '001' for a sequential directory,
+# '20261028-141500' for one created with create-new-feature.sh --timestamp.
+SPEC_NUMBER="$(basename "$FEATURE_DIR" | sed -nE 's/^([0-9]{8}-[0-9]{6}|[0-9]+)-.*/\1/p')"
 
 for f in "$SPEC" "$TASKS"; do
   if [ ! -f "$f" ]; then
@@ -69,7 +72,7 @@ if [ -z "$FRS" ]; then
   UNCHECKABLE=1
 else
   for fr in $FRS; do
-    hits=$(grep -c "$fr" "$TASKS")
+    hits=$(grep -cE "^- \[[ xX]\] T[0-9]+ .*$fr([^0-9]|$)" "$TASKS")
     if [ "$hits" -eq 0 ]; then
       echo "  DRIFT         $fr -> no task references it"
       DRIFT=1
@@ -100,7 +103,7 @@ fi
 echo
 
 # ------------------------------------------------------------- untagged tasks
-echo "## Tasks tagged to a user story"
+echo "## Tasks tagged to a user story (statistic, not a check)"
 UNTAGGED=$(grep -nE '^- \[[ xX]\] T[0-9]+ ' "$TASKS" | grep -vE '\[US[0-9]+\]' | wc -l | tr -d ' ')
 echo "  INFO          $UNTAGGED task(s) carry no [USn] tag"
 echo "                (setup, foundational and polish tasks legitimately have none;"
@@ -133,9 +136,23 @@ if [ ! -d "$BEHAVIORS_DIR" ]; then
   echo "  CANNOT CHECK  $BEHAVIORS_DIR does not exist."
   UNCHECKABLE=1
 else
-  FEATURES=$(grep -oE "$BEHAVIORS_DIR/[A-Za-z0-9_/.-]+\.feature" "$TASKS" 2>/dev/null | sort -u | while read -r f; do [ -f "$f" ] && echo "$f"; done)
-  if [ -z "$FEATURES" ]; then
-    echo "  INFO          no feature file named in tasks.md exists — scenario coverage not checked"
+  # Feature files are discovered on disk; one belongs to this spec when tasks.md names
+  # it, by path or by file name. Several specs share the directory, so a file that
+  # tasks.md does not name cannot be attributed.
+  ON_DISK=$(find "$BEHAVIORS_DIR" -type f -name '*.feature' | sort)
+  FEATURES=$(echo "$ON_DISK" | while IFS= read -r f; do
+    [ -n "$f" ] && grep -qF "$(basename "$f")" "$TASKS" && echo "$f"
+  done)
+  if [ -z "$FEATURES" ] && [ -z "$USER_STORIES" ]; then
+    echo "  INFO          the spec declares no user story — scenario coverage not checked"
+  elif [ -z "$FEATURES" ]; then
+    if [ -z "$ON_DISK" ]; then
+      echo "  CANNOT CHECK  $BEHAVIORS_DIR holds no .feature file."
+    else
+      echo "  CANNOT CHECK  no .feature file under $BEHAVIORS_DIR is named in tasks.md,"
+      echo "                so none can be attributed to this spec. Name it in the task that writes it."
+    fi
+    UNCHECKABLE=1
   else
     for f in $FEATURES; do
       if ! head -5 "$f" | grep -q '^# Covers:'; then
@@ -213,7 +230,7 @@ else
           NR <= 5 && /^# Covers:/ { header = $0; next }
           /^[[:space:]]*# Covers:/ { pending = $0; next }
           /^[[:space:]]*Rule:/ { rule = (pending != "" ? pending : header); pending = ""; next }
-          /^[[:space:]]*Scenario:/ { if (covers(rule != "" ? rule : header)) c++ }
+          /^[[:space:]]*Scenario( Outline| Template)?:/ { if (covers(rule != "" ? rule : header)) c++ }
           END { print c+0 }' "$f")))
       done
       if [ "$declared" -eq 0 ]; then

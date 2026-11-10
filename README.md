@@ -24,13 +24,13 @@ agentic-setup/
    with its ignore rules appended, then adapt the constitution and `AGENTS.md`:
 
    ```bash
-   rsync -a --exclude README.md --exclude .gitignore.snippet repo/ <project>/
+   rsync -a --exclude /README.md --exclude /.gitignore.snippet repo/ <project>/
    cat repo/.gitignore.snippet >> <project>/.gitignore
    ```
 
    See [repo/README.md](repo/README.md).
-4. **A new project** — copy `starter-kit/` to a new folder (`rsync -a --exclude build
-   --exclude .gradle starter-kit/ <project>/`), check that `./gradlew build` is green, then
+4. **A new project** — copy `starter-kit/` to a new folder (`rsync -a --exclude /build
+   --exclude /.gradle starter-kit/ <project>/`), check that `./gradlew build` is green, then
    copy `repo/` on top of it with the two commands of step 3 and start with the
    `domain-challenge` skill. See [starter-kit/README.md](starter-kit/README.md).
 

@@ -470,6 +470,7 @@ for _, ext_id in sorted(ranked):
             return 0
         else
             echo "Error: invalid extension registry $ext_dir/.registry" >&2
+            sed 's/^/  /' "$py_stderr" >&2
             rm -f "$py_stderr"
             return 1
         fi

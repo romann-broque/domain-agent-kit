@@ -1,6 +1,6 @@
 # Installation — instructions for an agent
 
-You are installing modules of [agentic-setup](README.md) for a user. Follow these rules:
+You are installing modules of [domain-agent-kit](README.md) for a user. Follow these rules:
 
 - `AGENTS_SETUP` below means the absolute path of this repository, `PROJECT` the project to equip.
 - Ask the user which modules they want before copying anything. Never overwrite a file that already

@@ -1,9 +1,27 @@
-# Starter kit
+# starter-kit/
 
-A small Spring Boot service laid out the way the [agentic-setup](https://github.com/romann-broque/agentic-setup)
-workflow (`repo/`) expects:
-screaming architecture (one top-level package per bounded context), clean layers
-inside each context, and three kinds of tests that keep it that way.
+Most projects start with `controller/`, `service/` and `repository/` folders: the layout says which
+framework is used, not what the business does, and nothing stops a controller from reaching into
+the database or one feature from reaching into another. This starter-kit is a Java 21 / Spring Boot
+service laid out the other way round, ready to receive its first feature.
+
+What it brings:
+
+- **Screaming architecture.** The top-level packages are the bounded contexts of the business
+  (`catalog`, `ordering`): listing them tells what the system does before telling which framework it
+  uses.
+- **Clean architecture inside each context.** Four layers, dependencies pointing inward: `domain`
+  (models and rules, no framework) depends on nothing, `application` (use cases and ports) on
+  `domain`, `presentation` (HTTP) and `infrastructure` (database, other contexts) on the layers
+  below.
+- **Contexts stay apart.** A context reaches another only through an anti-corruption layer, the
+  single class allowed to cross.
+- **The build guards the layout.** ArchUnit tests fail the build when a layer, a name or a crossing
+  drifts; one Cucumber feature covers each use case, one creation test each model.
+- **A locked supply chain.** Every dependency version is locked and every artifact checksum
+  verified.
+
+It is the shape the [`repo/`](../repo/README.md) workflow expects, but it works without it.
 
 It ships with two tiny contexts so every convention has a working example:
 
@@ -101,7 +119,7 @@ Behaviour reports land in `build/reports/behaviors/<context>/<use-case>.html`.
 ## Drive it with the workflow
 
 This folder is a bare project. To work on it with the agentic workflow, copy the
-`repo/` folder of agentic-setup on top of it (see its root README), then start at
+`repo/` folder of agentic-setup on top of it (see its `INSTALL.md`), then start at
 `domain-challenge` with your first ticket.
 
 ## Security

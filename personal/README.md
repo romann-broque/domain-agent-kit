@@ -1,7 +1,19 @@
 # personal/
 
-Optional, personal habits. Nothing in `global/` or `repo/` depends on them.
-Most of it is macOS-specific.
+Optional comfort, mostly for macOS. While the agent works you look elsewhere, and you miss the
+moment it stops to wait for you; its command output also fills its context with noise. Nothing in
+`global/` or `repo/` depends on this module.
+
+What it brings:
+
+- **You know when the agent waits for you.** A macOS notification when it finishes, asks a question,
+  waits for a permission or hits an error.
+- **Shorter command output.** Rules for `rtk`, a tool that filters verbose command output to save
+  tokens.
+
+## Install
+
+Let an agent follow [INSTALL.md](../INSTALL.md) (module `personal`), or install by hand:
 
 | Path | How to install | What it does |
 |---|---|---|

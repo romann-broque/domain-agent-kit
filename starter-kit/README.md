@@ -101,7 +101,7 @@ Behaviour reports land in `build/reports/behaviors/<context>/<use-case>.html`.
 ## Drive it with the workflow
 
 This folder is a bare project. To work on it with the agentic workflow, copy the
-`repo/` folder of agentic-setup on top of it (see its root README), then start at
+`repo/` folder of agentic-setup on top of it (see its `INSTALL.md`), then start at
 `domain-challenge` with your first ticket.
 
 ## Security

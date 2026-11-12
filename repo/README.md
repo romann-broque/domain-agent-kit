@@ -1,13 +1,36 @@
 # repo/
 
-The per-project workflow: spec-driven, test-first, domain-aware. Copy the content of this
-folder to the root of a project (for instance on top of a copy of `../starter-kit/`),
-leaving out this README and appending the ignore rules instead of copying them:
+Asked for a feature, an agent goes straight to the code: it fills the gaps of the ticket with
+guesses, writes the test after the code if at all, and nobody sees what it assumed. This module
+gives a project a workflow that takes a ticket to reviewed code one step at a time, and a domain
+documentation the agent keeps confronting with the tickets and the code.
+
+What it brings:
+
+- **You approve every step.** Each step ends with a short card of what the agent decided, assumed
+  and is unsure of. Nothing chains by itself: you read the card, then type the next step.
+- **The ticket is challenged before anything is written.** `domain-challenge` confronts it with the
+  domain documentation and stops on unknown words, broken rules, missing knowledge or a ticket too
+  large.
+- **Test first, and proven.** The failing test is written and seen failing before any code; scripts
+  check it in the commit history.
+- **Everything is traceable.** The ticket is kept verbatim in the spec, each requirement is
+  numbered, each test says which ones it covers: a broken link is reported as drift.
+- **New or existing project.** It fits on top of the starter-kit or of a project that already
+  exists; the rules are written for Java / Spring Boot and [listed below](#adapting-it) for
+  adaptation.
+
+## Install
+
+Let an agent follow [INSTALL.md](../INSTALL.md) (module `repo`), or copy the content of this folder
+to the root of the project, leaving out this README and appending the ignore rules:
 
 ```bash
 rsync -a --exclude /README.md --exclude /.gitignore.snippet repo/ <project>/
 cat repo/.gitignore.snippet >> <project>/.gitignore
 ```
+
+## What is inside
 
 ```
 repo/
@@ -31,8 +54,7 @@ repo/
 
 ## Workflow order
 
-Each step ends with a review card (Decided / Assumed / Uncertain). Nothing chains by itself:
-you read the card, then type the next step.
+Each step ends with a review card (Decided / Assumed / Uncertain).
 
 | # | Step | Produces |
 |---|---|---|

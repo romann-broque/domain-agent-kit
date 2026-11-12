@@ -9,7 +9,7 @@ Sync Impact Report
   level, one specific to a rule inside it (was: "may use a `Background:` inside a `Rule:`").
 - 1.1.0 (MINOR): Principle II — an anti-corruption layer is a second exception to "no
   test on infrastructure", alongside cross-cutting technical logic in `core`.
-- 1.0.0: ratified from the agentic-setup catalogue; principles I–V, constraints, workflow and governance.
+- 1.0.0: ratified from the domain-agent-kit catalogue; principles I–V, constraints, workflow and governance.
 - Templates reviewed: spec-template.md ✅, plan-template.md ✅, tasks-template.md ✅
 - Follow-up: set [RATIFICATION_DATE]; replace `com.example.starter` with your base package.
 -->

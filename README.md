@@ -1,21 +1,24 @@
-# agentic-setup
+# domain-agent-kit
 
 An AI coding agent writes code fast, but left alone it drifts: the code stops matching the ticket,
 the architecture erodes one shortcut at a time, and what the team knows of the business stays in
-people's heads. This repository is a ready-to-copy setup for [OpenCode](https://opencode.ai) that
-keeps the agent on rails, so you get its speed without losing control.
+people's heads. This repository is a kit for [OpenCode](https://opencode.ai), ready to copy into
+your projects: the agent builds a relevant domain documentation, confronts every ticket with it
+rigorously all the way to the review, and starts new projects from clean templates.
 
 What it brings:
 
-- **You stay in charge.** The agent takes a ticket to reviewed code one step at a time and stops
-  after each one, with a short card of what it decided, assumed and is unsure of. Nothing moves on
-  until you say so.
+- **The business is written down.** The agent keeps a domain documentation (vocabulary, contexts,
+  rules), challenges what it is told before writing it, and checks it against the running code.
+- **Every ticket is confronted, up to the review.** The ticket is checked against the domain before
+  anything is written, then against the spec, the tests, the code and the review comments, so
+  tickets, docs and code stay consistent.
+- **You stay in charge.** The agent works one step at a time and stops after each one, with a short
+  card of what it decided, assumed and is unsure of. Nothing moves on until you say so.
 - **Tests come first, and it is checked.** Shell scripts verify that every requirement reached a
   test and that each test was seen failing before its code was written.
-- **The business is written down.** The agent keeps a domain documentation (vocabulary, contexts,
-  rules) and confronts every ticket with it, so tickets, docs and code stay consistent.
-- **A clean project to start from**, if you need one: a Java / Spring Boot service whose tests fail
-  the build when the architecture drifts.
+- **Templates to start from**, if you need them: a Java / Spring Boot starter-kit in clean and
+  screaming architecture, whose tests fail the build when the layout drifts.
 
 ```
 ticket ──▶ challenge against the domain ──▶ spec ──▶ plan ──▶ tasks ──▶ failing test ──▶ code ──▶ checks + review ──▶ PR
@@ -38,7 +41,7 @@ Each module's README details what is inside.
 
 Clone this repository, open your agent in the project you want to equip, and give it this prompt:
 
-> Read `<path to agentic-setup>/README.md` and `INSTALL.md`. Explain to me in a few lines what each
+> Read `<path to domain-agent-kit>/README.md` and `INSTALL.md`. Explain to me in a few lines what each
 > module does, ask me which ones I want, then install them into this project by following
 > `INSTALL.md`, and show me the result of each check.
 
